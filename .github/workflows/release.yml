@@ -52,45 +52,13 @@ jobs:
 
           echo "Found standalone directory: $TARGET_DIR"
 
-          # Copy extra config files into standalone bundle
+          # Copy extra config and start scripts
           cp .env.example "$TARGET_DIR/.env.example" 2>/dev/null || true
           cp install.sh "$TARGET_DIR/install.sh" 2>/dev/null || true
           cp README.md "$TARGET_DIR/README.md" 2>/dev/null || true
-
-          # Create Unix start script
-          cat << 'SCRIPT' > "$TARGET_DIR/start.sh"
-#!/usr/bin/env bash
-export PORT=${PORT:-20128}
-if [ ! -f .env ]; then
-  if [ -f .env.example ]; then
-    cp .env.example .env
-  else
-    echo "PORT=$PORT" > .env
-  fi
-fi
-exec node server.js
-SCRIPT
-          chmod +x "$TARGET_DIR/start.sh"
-
-          # Create Windows start script
-          cat << 'WINBATCH' > "$TARGET_DIR/start.bat"
-@echo off
-title AtomicRouter Universal AI Gateway
-set PORT=20128
-if not exist .env (
-  if exist .env.example (
-    copy .env.example .env >nul 2>&1
-  ) else (
-    echo PORT=20128 > .env
-  )
-)
-echo ========================================================
-echo   ⚡ AtomicRouter Universal AI Gateway
-echo   Dashboard: http://localhost:20128/
-echo ========================================================
-node server.js
-pause
-WINBATCH
+          cp scripts/start.sh "$TARGET_DIR/start.sh" 2>/dev/null || true
+          cp scripts/start.bat "$TARGET_DIR/start.bat" 2>/dev/null || true
+          chmod +x "$TARGET_DIR/start.sh" 2>/dev/null || true
 
           # 1. Linux x64 Release
           echo "Packaging Linux Release..."
