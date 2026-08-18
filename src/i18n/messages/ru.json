@@ -9683,7 +9683,7 @@
     "relaunchApp": "Перезапустите настольное приложение OmniRoute"
   },
   "landing": {
-    "brandName": "ОмниРоут",
+    "brandName": "AtomicRouter",
     "navigateHome": "Перейти домой",
     "toggleMenu": "Переключить меню",
     "featuresLink": "Особенности",
@@ -10143,7 +10143,7 @@
     "agentUseCaseHint": "Может использоваться в качестве цели выполнения через протокол ACP.",
     "flowDiagramClient": "Клиентское приложение",
     "flowDiagramClientDesc": "SDK, API или вышестоящий сервис",
-    "flowDiagramOmniRoute": "ОмниРоут",
+    "flowDiagramOmniRoute": "AtomicRouter",
     "flowDiagramOmniRouteDesc": "Получает запрос и выбирает цель",
     "flowDiagramSpawn": "Процесс появления",
     "flowDiagramSpawnDesc": "Запускает двоичный файл CLI через stdio",

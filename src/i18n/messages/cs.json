@@ -9683,7 +9683,7 @@
     "relaunchApp": "Znovu spusťte desktopovou aplikaci OmniRoute"
   },
   "landing": {
-    "brandName": "OmniRoute",
+    "brandName": "AtomicRouter",
     "navigateHome": "Navigace domů",
     "toggleMenu": "Přepnout nabídku",
     "featuresLink": "Funkce",
@@ -10143,7 +10143,7 @@
     "agentUseCaseHint": "Může být použit jako cíl provádění prostřednictvím protokolu ACP",
     "flowDiagramClient": "Klientská aplikace",
     "flowDiagramClientDesc": "SDK, API nebo upstream služba",
-    "flowDiagramOmniRoute": "OmniRoute",
+    "flowDiagramOmniRoute": "AtomicRouter",
     "flowDiagramOmniRouteDesc": "Přijme požadavek a vybere cíl",
     "flowDiagramSpawn": "Proces spawnování",
     "flowDiagramSpawnDesc": "Spustí binární CLI přes stdio",

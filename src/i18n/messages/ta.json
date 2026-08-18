@@ -9683,7 +9683,7 @@
     "relaunchApp": "OmniRoute டெஸ்க்டாப் செயலியை மீண்டும் தொடங்கவும்"
   },
   "landing": {
-    "brandName": "OmniRoute",
+    "brandName": "AtomicRouter",
     "navigateHome": "Navigate to home",
     "toggleMenu": "Toggle menu",
     "featuresLink": "Features",
@@ -10143,7 +10143,7 @@
     "agentUseCaseHint": "ஏசிபி நெறிமுறை மூலம் செயல்படுத்தும் இலக்காகப் பயன்படுத்தலாம்",
     "flowDiagramClient": "கிளையண்ட் ஆப்",
     "flowDiagramClientDesc": "SDK, API அல்லது அப்ஸ்ட்ரீம் சேவை",
-    "flowDiagramOmniRoute": "OmniRoute",
+    "flowDiagramOmniRoute": "AtomicRouter",
     "flowDiagramOmniRouteDesc": "கோரிக்கையைப் பெற்று, இலக்கைத் தேர்ந்தெடுக்கிறது",
     "flowDiagramSpawn": "ஸ்பான் செயல்முறை",
     "flowDiagramSpawnDesc": "stdio வழியாக CLI பைனரியை அறிமுகப்படுத்துகிறது",

@@ -9683,7 +9683,7 @@
     "relaunchApp": "เปิดแอปเดสก์ท็อป OmniRoute ใหม่อีกครั้ง"
   },
   "landing": {
-    "brandName": "OmniRoute",
+    "brandName": "AtomicRouter",
     "navigateHome": "นำทางไปที่บ้าน",
     "toggleMenu": "สลับเมนู",
     "featuresLink": "คุณสมบัติ",
@@ -10143,7 +10143,7 @@
     "agentUseCaseHint": "สามารถใช้เป็นเป้าหมายการดำเนินการผ่านโปรโตคอล ACP",
     "flowDiagramClient": "แอปไคลเอ็นต์",
     "flowDiagramClientDesc": "SDK, API หรือบริการอัปสตรีม",
-    "flowDiagramOmniRoute": "OmniRoute",
+    "flowDiagramOmniRoute": "AtomicRouter",
     "flowDiagramOmniRouteDesc": "รับคำขอและเลือกเป้าหมาย",
     "flowDiagramSpawn": "กระบวนการวางไข่",
     "flowDiagramSpawnDesc": "เปิดตัวไบนารี CLI ผ่าน stdio",

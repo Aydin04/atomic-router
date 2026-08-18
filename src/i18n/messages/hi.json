@@ -9683,7 +9683,7 @@
     "relaunchApp": "OmniRoute डेस्कटॉप ऐप को फिर से लॉन्च करें"
   },
   "landing": {
-    "brandName": "ओम्निरूट",
+    "brandName": "AtomicRouter",
     "navigateHome": "घर पर नेविगेट करें",
     "toggleMenu": "मेनू टॉगल करें",
     "featuresLink": "विशेषताएं",
@@ -10143,7 +10143,7 @@
     "agentUseCaseHint": "एसीपी प्रोटोकॉल के माध्यम से निष्पादन लक्ष्य के रूप में उपयोग किया जा सकता है",
     "flowDiagramClient": "क्लाइंट ऐप",
     "flowDiagramClientDesc": "एसडीके, एपीआई, या अपस्ट्रीम सेवा",
-    "flowDiagramOmniRoute": "ओम्निरूट",
+    "flowDiagramOmniRoute": "AtomicRouter",
     "flowDiagramOmniRouteDesc": "अनुरोध प्राप्त करता है और लक्ष्य का चयन करता है",
     "flowDiagramSpawn": "स्पॉन प्रक्रिया",
     "flowDiagramSpawnDesc": "stdio के माध्यम से सीएलआई बाइनरी लॉन्च करता है",

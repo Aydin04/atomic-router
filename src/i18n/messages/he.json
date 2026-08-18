@@ -9683,7 +9683,7 @@
     "relaunchApp": "שוב השקת את אפליקציית OmniRoute לשולחן העבודה"
   },
   "landing": {
-    "brandName": "OmniRoute",
+    "brandName": "AtomicRouter",
     "navigateHome": "נווט אל הבית",
     "toggleMenu": "החלף תפריט",
     "featuresLink": "תכונות",
@@ -10143,7 +10143,7 @@
     "agentUseCaseHint": "יכול לשמש כיעד ביצוע באמצעות פרוטוקול ACP",
     "flowDiagramClient": "אפליקציית לקוח",
     "flowDiagramClientDesc": "SDK, API או שירות במעלה הזרם",
-    "flowDiagramOmniRoute": "OmniRoute",
+    "flowDiagramOmniRoute": "AtomicRouter",
     "flowDiagramOmniRouteDesc": "מקבל בקשה ובוחר יעד",
     "flowDiagramSpawn": "תהליך השרצים",
     "flowDiagramSpawnDesc": "משיק CLI בינארי דרך stdio",

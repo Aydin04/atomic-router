@@ -9683,7 +9683,7 @@
     "relaunchApp": "OmniRoute masaüstü uygulamasını yeniden başlatın"
   },
   "landing": {
-    "brandName": "OmniRoute",
+    "brandName": "AtomicRouter",
     "navigateHome": "Ana sayfaya git",
     "toggleMenu": "Menüyü aç/kapat",
     "featuresLink": "Özellikler",
@@ -10143,7 +10143,7 @@
     "agentUseCaseHint": "ACP protokolü aracılığıyla yürütme hedefi olarak kullanılabilir",
     "flowDiagramClient": "İstemci Uygulaması",
     "flowDiagramClientDesc": "SDK, API veya yukarı akış hizmeti",
-    "flowDiagramOmniRoute": "OmniRoute",
+    "flowDiagramOmniRoute": "AtomicRouter",
     "flowDiagramOmniRouteDesc": "İsteği alır ve hedefi seçer",
     "flowDiagramSpawn": "Doğma Süreci",
     "flowDiagramSpawnDesc": "CLI ikili dosyasını stdio aracılığıyla başlatır",

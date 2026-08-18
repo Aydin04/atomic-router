@@ -9683,7 +9683,7 @@
     "relaunchApp": "Indítsa újra az OmniRoute asztali alkalmazást"
   },
   "landing": {
-    "brandName": "OmniRoute",
+    "brandName": "AtomicRouter",
     "navigateHome": "Navigáljon haza",
     "toggleMenu": "Váltó menü",
     "featuresLink": "Jellemzők",
@@ -10143,7 +10143,7 @@
     "agentUseCaseHint": "Használható végrehajtási célként ACP protokollon keresztül",
     "flowDiagramClient": "Ügyfélalkalmazás",
     "flowDiagramClientDesc": "SDK, API vagy upstream szolgáltatás",
-    "flowDiagramOmniRoute": "OmniRoute",
+    "flowDiagramOmniRoute": "AtomicRouter",
     "flowDiagramOmniRouteDesc": "Fogadja a kérést és kiválasztja a célt",
     "flowDiagramSpawn": "Spawn folyamat",
     "flowDiagramSpawnDesc": "Elindítja a CLI bináris fájlt az stdio-n keresztül",

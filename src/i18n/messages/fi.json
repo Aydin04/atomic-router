@@ -9683,7 +9683,7 @@
     "relaunchApp": "Käynnistä OmniRoute-työpöytäsovellus uudelleen"
   },
   "landing": {
-    "brandName": "OmniRoute",
+    "brandName": "AtomicRouter",
     "navigateHome": "Navigoi kotiin",
     "toggleMenu": "Vaihda valikkoa",
     "featuresLink": "Ominaisuudet",
@@ -10143,7 +10143,7 @@
     "agentUseCaseHint": "Voidaan käyttää suorituskohteena ACP-protokollan kautta",
     "flowDiagramClient": "Asiakassovellus",
     "flowDiagramClientDesc": "SDK, API tai ylempi palvelu",
-    "flowDiagramOmniRoute": "OmniRoute",
+    "flowDiagramOmniRoute": "AtomicRouter",
     "flowDiagramOmniRouteDesc": "Vastaanottaa pyynnön ja valitsee kohteen",
     "flowDiagramSpawn": "Spawn-prosessi",
     "flowDiagramSpawnDesc": "Käynnistää CLI-binaarin stdion kautta",

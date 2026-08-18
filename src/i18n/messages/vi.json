@@ -9685,7 +9685,7 @@
     "relaunchApp": "Khởi động lại ứng dụng máy tính để bàn OmniRoute"
   },
   "landing": {
-    "brandName": "OmniRoute",
+    "brandName": "AtomicRouter",
     "navigateHome": "Đi tới trang chủ",
     "toggleMenu": "Bật/tắt menu",
     "featuresLink": "Tính năng",
@@ -10145,7 +10145,7 @@
     "agentUseCaseHint": "Có thể được sử dụng làm mục tiêu thực thi thông qua giao thức ACP",
     "flowDiagramClient": "Ứng dụng khách",
     "flowDiagramClientDesc": "SDK, API hoặc dịch vụ thượng nguồn",
-    "flowDiagramOmniRoute": "OmniRoute",
+    "flowDiagramOmniRoute": "AtomicRouter",
     "flowDiagramOmniRouteDesc": "Nhận yêu cầu và chọn mục tiêu",
     "flowDiagramSpawn": "Tạo tiến trình",
     "flowDiagramSpawnDesc": "Khởi chạy tệp nhị phân CLI qua stdio",

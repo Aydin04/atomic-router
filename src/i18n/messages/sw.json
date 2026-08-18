@@ -9683,7 +9683,7 @@
     "relaunchApp": "Anzisha upya programu ya desktop ya OmniRoute"
   },
   "landing": {
-    "brandName": "OmniRoute",
+    "brandName": "AtomicRouter",
     "navigateHome": "Navigate to home",
     "toggleMenu": "Toggle menu",
     "featuresLink": "Features",
@@ -10143,7 +10143,7 @@
     "agentUseCaseHint": "Inaweza kutumika kama lengo la utekelezaji kupitia itifaki ya ACP",
     "flowDiagramClient": "Programu ya Mteja",
     "flowDiagramClientDesc": "SDK, API, au huduma ya juu ya mkondo",
-    "flowDiagramOmniRoute": "OmniRoute",
+    "flowDiagramOmniRoute": "AtomicRouter",
     "flowDiagramOmniRouteDesc": "Inapokea ombi na kuchagua lengo",
     "flowDiagramSpawn": "Mchakato wa kuzaa",
     "flowDiagramSpawnDesc": "Inazindua binary ya CLI kupitia stdio",

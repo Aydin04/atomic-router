@@ -9683,7 +9683,7 @@
     "relaunchApp": "Rilancia l'app desktop OmniRoute"
   },
   "landing": {
-    "brandName": "OmniRoute",
+    "brandName": "AtomicRouter",
     "navigateHome": "Naviga verso casa",
     "toggleMenu": "Cambia menu",
     "featuresLink": "Caratteristiche",
@@ -10143,7 +10143,7 @@
     "agentUseCaseHint": "Può essere utilizzato come destinazione di esecuzione tramite il protocollo ACP",
     "flowDiagramClient": "Applicazione cliente",
     "flowDiagramClientDesc": "SDK, API o servizio upstream",
-    "flowDiagramOmniRoute": "OmniRoute",
+    "flowDiagramOmniRoute": "AtomicRouter",
     "flowDiagramOmniRouteDesc": "Riceve la richiesta e seleziona il target",
     "flowDiagramSpawn": "Processo di generazione",
     "flowDiagramSpawnDesc": "Avvia il binario CLI tramite stdio",

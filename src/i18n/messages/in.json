@@ -9683,7 +9683,7 @@
     "relaunchApp": "Luncurkan kembali aplikasi desktop OmniRoute"
   },
   "landing": {
-    "brandName": "OmniRoute",
+    "brandName": "AtomicRouter",
     "navigateHome": "Navigate to home",
     "toggleMenu": "Toggle menu",
     "featuresLink": "Features",
@@ -10143,7 +10143,7 @@
     "agentUseCaseHint": "Dapat digunakan sebagai target eksekusi melalui protokol ACP",
     "flowDiagramClient": "Aplikasi Klien",
     "flowDiagramClientDesc": "SDK, API, atau layanan upstream",
-    "flowDiagramOmniRoute": "OmniRoute",
+    "flowDiagramOmniRoute": "AtomicRouter",
     "flowDiagramOmniRouteDesc": "Menerima permintaan dan memilih target",
     "flowDiagramSpawn": "Proses Pemijahan",
     "flowDiagramSpawnDesc": "Meluncurkan biner CLI melalui stdio",

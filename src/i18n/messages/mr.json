@@ -9683,7 +9683,7 @@
     "relaunchApp": "OmniRoute डेस्कटॉप अॅप पुन्हा सुरू करा"
   },
   "landing": {
-    "brandName": "OmniRoute",
+    "brandName": "AtomicRouter",
     "navigateHome": "Navigate to home",
     "toggleMenu": "Toggle menu",
     "featuresLink": "Features",
@@ -10143,7 +10143,7 @@
     "agentUseCaseHint": "ACP प्रोटोकॉलद्वारे अंमलबजावणी लक्ष्य म्हणून वापरले जाऊ शकते",
     "flowDiagramClient": "क्लायंट ॲप",
     "flowDiagramClientDesc": "SDK, API किंवा अपस्ट्रीम सेवा",
-    "flowDiagramOmniRoute": "OmniRoute",
+    "flowDiagramOmniRoute": "AtomicRouter",
     "flowDiagramOmniRouteDesc": "विनंती प्राप्त करते आणि लक्ष्य निवडते",
     "flowDiagramSpawn": "स्पॉन प्रक्रिया",
     "flowDiagramSpawnDesc": "stdio द्वारे CLI बायनरी लाँच करते",

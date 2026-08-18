@@ -9683,7 +9683,7 @@
     "relaunchApp": "Start på nytt OmniRoute skrivebordsapp'en"
   },
   "landing": {
-    "brandName": "OmniRoute",
+    "brandName": "AtomicRouter",
     "navigateHome": "Naviger til hjem",
     "toggleMenu": "Bytt meny",
     "featuresLink": "Funksjoner",
@@ -10143,7 +10143,7 @@
     "agentUseCaseHint": "Kan brukes som et utførelsesmål via ACP-protokoll",
     "flowDiagramClient": "Klient-app",
     "flowDiagramClientDesc": "SDK, API eller oppstrømstjeneste",
-    "flowDiagramOmniRoute": "OmniRoute",
+    "flowDiagramOmniRoute": "AtomicRouter",
     "flowDiagramOmniRouteDesc": "Mottar forespørsel og velger mål",
     "flowDiagramSpawn": "Spawn-prosess",
     "flowDiagramSpawnDesc": "Lanserer CLI binær via stdio",

@@ -9683,7 +9683,7 @@
     "relaunchApp": "أعد تشغيل تطبيق OmniRoute لسطح المكتب"
   },
   "landing": {
-    "brandName": "OmniRoute",
+    "brandName": "AtomicRouter",
     "navigateHome": "انتقل إلى المنزل",
     "toggleMenu": "تبديل القائمة",
     "featuresLink": "الميزات",
@@ -10143,7 +10143,7 @@
     "agentUseCaseHint": "يمكن استخدامه كهدف تنفيذ عبر بروتوكول ACP",
     "flowDiagramClient": "تطبيق العميل",
     "flowDiagramClientDesc": "SDK أو API أو الخدمة الأولية",
-    "flowDiagramOmniRoute": "OmniRoute",
+    "flowDiagramOmniRoute": "AtomicRouter",
     "flowDiagramOmniRouteDesc": "يتلقى الطلب ويختار الهدف",
     "flowDiagramSpawn": "عملية التكاثر",
     "flowDiagramSpawnDesc": "يطلق ثنائي CLI عبر stdio",

@@ -9683,7 +9683,7 @@
     "relaunchApp": "Relansează aplicația desktop OmniRoute"
   },
   "landing": {
-    "brandName": "OmniRoute",
+    "brandName": "AtomicRouter",
     "navigateHome": "Navigați la acasă",
     "toggleMenu": "Comutați meniul",
     "featuresLink": "Caracteristici",
@@ -10143,7 +10143,7 @@
     "agentUseCaseHint": "Poate fi folosit ca țintă de execuție prin protocolul ACP",
     "flowDiagramClient": "Aplicația client",
     "flowDiagramClientDesc": "SDK, API sau serviciu în amonte",
-    "flowDiagramOmniRoute": "OmniRoute",
+    "flowDiagramOmniRoute": "AtomicRouter",
     "flowDiagramOmniRouteDesc": "Primește cererea și selectează ținta",
     "flowDiagramSpawn": "Procesul de apariție",
     "flowDiagramSpawnDesc": "Lansează binarul CLI prin stdio",

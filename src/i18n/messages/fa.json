@@ -9683,7 +9683,7 @@
     "relaunchApp": "اپلیکیشن دسکتاپ OmniRoute را دوباره راه‌اندازی کنید"
   },
   "landing": {
-    "brandName": "OmniRoute",
+    "brandName": "AtomicRouter",
     "navigateHome": "Navigate to home",
     "toggleMenu": "Toggle menu",
     "featuresLink": "Features",
@@ -10143,7 +10143,7 @@
     "agentUseCaseHint": "می تواند به عنوان یک هدف اجرایی از طریق پروتکل ACP استفاده شود",
     "flowDiagramClient": "برنامه مشتری",
     "flowDiagramClientDesc": "SDK، API یا سرویس بالادستی",
-    "flowDiagramOmniRoute": "OmniRoute",
+    "flowDiagramOmniRoute": "AtomicRouter",
     "flowDiagramOmniRouteDesc": "درخواست را دریافت می کند و هدف را انتخاب می کند",
     "flowDiagramSpawn": "فرآیند تخم ریزی",
     "flowDiagramSpawnDesc": "باینری CLI را از طریق stdio راه اندازی می کند",

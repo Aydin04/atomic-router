@@ -9683,7 +9683,7 @@
     "relaunchApp": "OmniRoute 데스크탑 앱을 다시 시작하세요."
   },
   "landing": {
-    "brandName": "OmniRoute",
+    "brandName": "AtomicRouter",
     "navigateHome": "홈으로 이동",
     "toggleMenu": "토글 메뉴",
     "featuresLink": "특징",
@@ -10143,7 +10143,7 @@
     "agentUseCaseHint": "ACP 프로토콜을 통해 실행 대상으로 사용 가능",
     "flowDiagramClient": "클라이언트 앱",
     "flowDiagramClientDesc": "SDK, API 또는 업스트림 서비스",
-    "flowDiagramOmniRoute": "OmniRoute",
+    "flowDiagramOmniRoute": "AtomicRouter",
     "flowDiagramOmniRouteDesc": "요청을 받고 대상을 선택합니다.",
     "flowDiagramSpawn": "스폰 프로세스",
     "flowDiagramSpawnDesc": "stdio를 통해 CLI 바이너리 실행",

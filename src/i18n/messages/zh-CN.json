@@ -9683,7 +9683,7 @@
     "relaunchApp": "重新启动 OmniRoute 桌面应用程序"
   },
   "landing": {
-    "brandName": "OmniRoute",
+    "brandName": "AtomicRouter",
     "navigateHome": "导航至主页",
     "toggleMenu": "切换菜单",
     "featuresLink": "特点",
@@ -10143,7 +10143,7 @@
     "agentUseCaseHint": "可通过 ACP 协议用作执行目标",
     "flowDiagramClient": "客户端应用",
     "flowDiagramClientDesc": "SDK、API 或上游服务",
-    "flowDiagramOmniRoute": "OmniRoute",
+    "flowDiagramOmniRoute": "AtomicRouter",
     "flowDiagramOmniRouteDesc": "接收请求并选择目标",
     "flowDiagramSpawn": "启动进程",
     "flowDiagramSpawnDesc": "通过 stdio 启动 CLI 二进制文件",

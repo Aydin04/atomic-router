@@ -9683,7 +9683,7 @@
     "relaunchApp": "OmniRoute デスクトップアプリを再起動します"
   },
   "landing": {
-    "brandName": "オムニルート",
+    "brandName": "AtomicRouter",
     "navigateHome": "ホームに移動する",
     "toggleMenu": "メニューの切り替え",
     "featuresLink": "特長",
@@ -10143,7 +10143,7 @@
     "agentUseCaseHint": "ACPプロトコル経由で実行ターゲットとして使用可能",
     "flowDiagramClient": "クライアントアプリ",
     "flowDiagramClientDesc": "SDK、API、またはアップストリーム サービス",
-    "flowDiagramOmniRoute": "オムニルート",
+    "flowDiagramOmniRoute": "AtomicRouter",
     "flowDiagramOmniRouteDesc": "リクエストを受信し、ターゲットを選択します",
     "flowDiagramSpawn": "スポーンプロセス",
     "flowDiagramSpawnDesc": "標準入出力経由で CLI バイナリを起動します",

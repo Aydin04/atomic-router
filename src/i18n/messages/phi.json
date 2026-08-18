@@ -9683,7 +9683,7 @@
     "relaunchApp": "I-relaunch ang OmniRoute desktop app"
   },
   "landing": {
-    "brandName": "OmniRoute",
+    "brandName": "AtomicRouter",
     "navigateHome": "Mag-navigate sa bahay",
     "toggleMenu": "I-toggle ang menu",
     "featuresLink": "Mga tampok",
@@ -10143,7 +10143,7 @@
     "agentUseCaseHint": "Maaaring gamitin bilang target ng pagpapatupad sa pamamagitan ng ACP protocol",
     "flowDiagramClient": "Client App",
     "flowDiagramClientDesc": "SDK, API, o upstream na serbisyo",
-    "flowDiagramOmniRoute": "OmniRoute",
+    "flowDiagramOmniRoute": "AtomicRouter",
     "flowDiagramOmniRouteDesc": "Tumatanggap ng kahilingan at pumipili ng target",
     "flowDiagramSpawn": "Proseso ng Pangingitlog",
     "flowDiagramSpawnDesc": "Inilunsad ang CLI binary sa pamamagitan ng stdio",
