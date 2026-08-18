@@ -2,7 +2,7 @@
 # ==============================================================================
 # ⚡ AtomicRouter 1-Line Automated Installer
 # Pure Streamlined Universal AI Gateway Fork of OmniRoute
-# Optimized for 512MB - 1GB Low-Spec VPS
+# Optimized for 512MB - 1GB Low-Spec VPS (Instant Pre-Built Deployment)
 # ==============================================================================
 
 set -e
@@ -18,12 +18,14 @@ NC='\033[0m'
 
 INSTALL_DIR="${INSTALL_DIR:-/opt/atomic-router}"
 PORT="${PORT:-20128}"
-REPO_URL="https://github.com/dianrestu/atomic-router.git"
+REPO="dianrestu/atomic-router"
+RELEASE_TAG="${RELEASE_TAG:-v1.0.0}"
+RELEASE_URL="https://github.com/${REPO}/releases/download/${RELEASE_TAG}/atomic-router-linux-x64.tar.gz"
 
 echo -e "${CYAN}${BOLD}"
 echo "================================================================"
 echo "   ⚡ AtomicRouter | Ultra-Lightweight Universal AI Gateway"
-echo "   (Pure Gateway Fork of OmniRoute - 330+ Providers & Combos)"
+echo "   (Pre-Compiled Standalone Release - Fast 30s Install)"
 echo "================================================================"
 echo -e "${NC}"
 
@@ -33,29 +35,10 @@ if [ "$(id -u)" -ne 0 ]; then
   exit 1
 fi
 
-# 1. Check RAM and automatically setup Swap if RAM < 1.5GB
-TOTAL_RAM_KB=$(grep MemTotal /proc/meminfo | awk '{print $2}')
-TOTAL_RAM_MB=$((TOTAL_RAM_KB / 1024))
-TOTAL_SWAP_KB=$(grep SwapTotal /proc/meminfo | awk '{print $2}')
-
-echo -e "${BLUE}[1/6] Checking system memory... (Detected: ${TOTAL_RAM_MB} MB RAM)${NC}"
-
-if [ "$TOTAL_RAM_MB" -lt 1500 ] && [ "$TOTAL_SWAP_KB" -lt 500000 ]; then
-  echo -e "${YELLOW}[!] Low memory detected (${TOTAL_RAM_MB} MB). Setting up 1.5 GB Swap to prevent Out-Of-Memory during build...${NC}"
-  if [ ! -f /swapfile_atomic ]; then
-    fallocate -l 1536M /swapfile_atomic 2>/dev/null || dd if=/dev/zero of=/swapfile_atomic bs=1M count=1536
-    chmod 600 /swapfile_atomic
-    mkswap /swapfile_atomic >/dev/null 2>&1
-    swapon /swapfile_atomic 2>/dev/null || true
-    echo -e "${GREEN}[✓] 1.5 GB Swap active.${NC}"
-  fi
-fi
-
-# 2. Install essential packages & Node.js 22 LTS if missing
-echo -e "${BLUE}[2/6] Checking dependencies (Node.js, Git, curl)...${NC}"
-if ! command -v git &>/dev/null || ! command -v curl &>/dev/null; then
-  echo -e "${YELLOW}Installing git and curl...${NC}"
-  apt-get update -y && apt-get install -y git curl build-essential || yum install -y git curl gcc-c++ make
+# 1. Install Node.js 22 LTS, curl, and tar if missing
+echo -e "${BLUE}[1/4] Checking system dependencies (Node.js 22 LTS, tar, curl)...${NC}"
+if ! command -v curl &>/dev/null || ! command -v tar &>/dev/null; then
+  apt-get update -y && apt-get install -y curl tar || yum install -y curl tar
 fi
 
 if ! command -v node &>/dev/null || [ "$(node -v | cut -d'.' -f1 | tr -d 'v')" -lt 20 ]; then
@@ -64,28 +47,32 @@ if ! command -v node &>/dev/null || [ "$(node -v | cut -d'.' -f1 | tr -d 'v')" -
   apt-get install -y nodejs || yum install -y nodejs
 fi
 
-echo -e "${GREEN}[✓] Node.js $(node -v) and npm $(npm -v) installed.${NC}"
+echo -e "${GREEN}[✓] Node.js $(node -v) ready.${NC}"
 
-# 3. Clone or update repository
-echo -e "${BLUE}[3/6] Setting up AtomicRouter source at ${INSTALL_DIR}...${NC}"
-if [ -d "$INSTALL_DIR/.git" ]; then
-  echo -e "${YELLOW}Updating existing installation...${NC}"
-  cd "$INSTALL_DIR"
-  git fetch origin main || true
-  git reset --hard origin/main || true
+# 2. Download and extract pre-compiled release (No heavy compile on VPS!)
+echo -e "${BLUE}[2/4] Fetching pre-compiled release from GitHub...${NC}"
+mkdir -p "$INSTALL_DIR"
+TEMP_TAR="/tmp/atomic-router-pkg.tar.gz"
+
+if curl -sIL "$RELEASE_URL" | grep -qE "HTTP/.* (200|302)"; then
+  echo -e "${GREEN}[✓] Downloading pre-built package...${NC}"
+  curl -fsSL "$RELEASE_URL" -o "$TEMP_TAR"
+  tar -xzf "$TEMP_TAR" -C /tmp/
+  cp -r /tmp/atomic-router/* "$INSTALL_DIR/"
+  rm -rf /tmp/atomic-router "$TEMP_TAR"
 else
-  mkdir -p "$INSTALL_DIR"
-  git clone --depth=1 "$REPO_URL" "$INSTALL_DIR"
-  cd "$INSTALL_DIR"
+  echo -e "${YELLOW}[!] Pre-built release tarball not found, cloning repository directly...${NC}"
+  if [ -d "$INSTALL_DIR/.git" ]; then
+    cd "$INSTALL_DIR" && git pull || true
+  else
+    git clone --depth=1 "https://github.com/${REPO}.git" "$INSTALL_DIR"
+  fi
 fi
 
-# 4. Install dependencies with memory limit
-echo -e "${BLUE}[4/6] Installing dependencies (Capped memory mode for low-spec VPS)...${NC}"
-export NODE_OPTIONS="--max-old-space-size=450"
-npm install --no-audit --no-fund
+cd "$INSTALL_DIR"
 
-# 5. Build optimized standalone gateway
-echo -e "${BLUE}[5/6] Building production gateway...${NC}"
+# 3. Setup configuration & install production dependencies
+echo -e "${BLUE}[3/4] Initializing configuration and production dependencies...${NC}"
 if [ ! -f "$INSTALL_DIR/.env" ]; then
   if [ -f "$INSTALL_DIR/.env.example" ]; then
     cp "$INSTALL_DIR/.env.example" "$INSTALL_DIR/.env"
@@ -94,11 +81,13 @@ if [ ! -f "$INSTALL_DIR/.env" ]; then
   fi
 fi
 
-npm run build
+# Install dependencies in lightweight mode
+export NODE_OPTIONS="--max-old-space-size=450"
+npm install --omit=dev --no-audit --no-fund 2>/dev/null || npm install --no-audit --no-fund
 
-# 6. Configure Systemd Service
-echo -e "${BLUE}[6/6] Configuring systemd background service...${NC}"
-cat << 'SERVICE_EOF' > /etc/systemd/system/atomic-router.service
+# 4. Setup Systemd Service
+echo -e "${BLUE}[4/4] Setting up systemd background service...${NC}"
+cat << SERVICE_EOF > /etc/systemd/system/atomic-router.service
 [Unit]
 Description=AtomicRouter Universal AI Gateway Service
 After=network.target
@@ -106,11 +95,11 @@ After=network.target
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/opt/atomic-router
+WorkingDirectory=${INSTALL_DIR}
 Environment=NODE_ENV=production
-Environment=PORT=20128
+Environment=PORT=${PORT}
 Environment=NODE_OPTIONS="--max-old-space-size=450"
-ExecStart=/usr/bin/npm start
+ExecStart=$(which npm) start
 Restart=always
 RestartSec=5
 StandardOutput=journal
@@ -124,7 +113,7 @@ systemctl daemon-reload
 systemctl enable atomic-router
 systemctl restart atomic-router
 
-# Fetch public / local IP
+# Fetch public IP
 SERVER_IP=$(curl -s -4 ifconfig.me || curl -s -4 api.ipify.org || hostname -I | awk '{print $1}')
 
 echo -e "${GREEN}${BOLD}"
