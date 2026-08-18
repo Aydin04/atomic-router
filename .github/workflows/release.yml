@@ -44,8 +44,17 @@ jobs:
             TARGET_DIR="."
           fi
 
-          # Prune cache and sourcemaps
-          find "$TARGET_DIR" -type d -name "cache" -exec rm -rf {} + 2>/dev/null || true
+          # Strip unused heavy packages (playwright, electron, unused OS swc binaries, caches)
+          rm -rf "$TARGET_DIR"/node_modules/playwright* \
+                 "$TARGET_DIR"/node_modules/@playwright \
+                 "$TARGET_DIR"/node_modules/electron \
+                 "$TARGET_DIR"/node_modules/@next/swc-darwin* \
+                 "$TARGET_DIR"/node_modules/@next/swc-win32* \
+                 "$TARGET_DIR"/node_modules/@next/swc-wasm* \
+                 "$TARGET_DIR"/.build/cache \
+                 "$TARGET_DIR"/.next/cache \
+                 "$TARGET_DIR"/node_modules/.cache 2>/dev/null || true
+
           find "$TARGET_DIR" -type f -name "*.map" -delete 2>/dev/null || true
 
           # Copy extra config files into standalone bundle
@@ -53,7 +62,10 @@ jobs:
           cp install.sh "$TARGET_DIR/install.sh" 2>/dev/null || true
           cp README.md "$TARGET_DIR/README.md" 2>/dev/null || true
 
-          # Safe tar archive written to /tmp first (prevents tar self-read loop)
+          echo "Standalone directory size:"
+          du -sh "$TARGET_DIR"
+
+          # Fast tar archive written to /tmp first
           tar --exclude='*.tar.gz' --exclude='*/cache/*' --exclude='*.map' -czf /tmp/atomic-router-linux-x64.tar.gz -C "$TARGET_DIR" .
           mv /tmp/atomic-router-linux-x64.tar.gz ./atomic-router-linux-x64.tar.gz
           ls -lh atomic-router-linux-x64.tar.gz
