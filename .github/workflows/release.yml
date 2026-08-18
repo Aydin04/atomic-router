@@ -38,6 +38,9 @@ jobs:
 
       - name: Package Release Archive
         run: |
+          # Remove heavy build cache (2GB+) so release package is ultra-lean (~40MB)
+          rm -rf .build/cache
+
           mkdir -p dist/atomic-router
           cp -r .build dist/atomic-router/
           cp -r public dist/atomic-router/ 2>/dev/null || true
@@ -50,6 +53,7 @@ jobs:
           cd dist
           tar -czf ../atomic-router-linux-x64.tar.gz atomic-router
           cd ..
+          ls -lh atomic-router-linux-x64.tar.gz
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
