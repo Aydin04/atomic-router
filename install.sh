@@ -56,9 +56,8 @@ TEMP_TAR="/tmp/atomic-router-pkg.tar.gz"
 if curl -sIL "$RELEASE_URL" | grep -qE "HTTP/.* (200|302)"; then
   echo -e "${GREEN}[✓] Downloading pre-built package...${NC}"
   curl -fsSL "$RELEASE_URL" -o "$TEMP_TAR"
-  tar -xzf "$TEMP_TAR" -C /tmp/
-  cp -r /tmp/atomic-router/* "$INSTALL_DIR/"
-  rm -rf /tmp/atomic-router "$TEMP_TAR"
+  tar -xzf "$TEMP_TAR" -C "$INSTALL_DIR/"
+  rm -rf "$TEMP_TAR"
 else
   echo -e "${YELLOW}[!] Pre-built release tarball not found, cloning repository directly...${NC}"
   if [ -d "$INSTALL_DIR/.git" ]; then
@@ -130,6 +129,7 @@ RELEASE_URL="https://github.com/${REPO}/releases/latest/download/atomic-router-l
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 BOLD='\033[1m'
 NC='\033[0m'
@@ -142,12 +142,11 @@ case "$1" in
       exit 1
     fi
     TEMP_TAR="/tmp/atomic-router-pkg.tar.gz"
-    echo -e "${BLUE}Downloading latest release...${NC}"
+    echo -e "${BLUE}Downloading latest release package...${NC}"
     curl -fsSL "$RELEASE_URL" -o "$TEMP_TAR"
     echo -e "${BLUE}Applying update files...${NC}"
-    tar -xzf "$TEMP_TAR" -C /tmp/
-    cp -r /tmp/atomic-router/* "$INSTALL_DIR/"
-    rm -rf /tmp/atomic-router "$TEMP_TAR"
+    tar -xzf "$TEMP_TAR" -C "$INSTALL_DIR/"
+    rm -rf "$TEMP_TAR"
     echo -e "${BLUE}Restarting service...${NC}"
     systemctl daemon-reload
     systemctl restart atomic-router

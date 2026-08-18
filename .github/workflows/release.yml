@@ -38,27 +38,19 @@ jobs:
 
       - name: Package Release Archive
         run: |
-          mkdir -p dist/atomic-router
-
-          # Copy Next.js Standalone build artifacts
-          if [ -d ".build/standalone" ]; then
-            cp -r .build/standalone/* dist/atomic-router/ 2>/dev/null || cp -r .build/standalone/. dist/atomic-router/
-            mkdir -p dist/atomic-router/.build
-            cp -r .build/static dist/atomic-router/.build/static 2>/dev/null || true
-          else
-            cp -r .build dist/atomic-router/
+          echo "Packaging standalone bundle..."
+          TARGET_DIR=".build/standalone"
+          if [ ! -d "$TARGET_DIR" ]; then
+            TARGET_DIR="."
           fi
 
-          cp -r public dist/atomic-router/public 2>/dev/null || true
-          cp -r open-sse dist/atomic-router/open-sse 2>/dev/null || true
-          cp package.json dist/atomic-router/package.json
-          cp .env.example dist/atomic-router/.env.example
-          cp install.sh dist/atomic-router/install.sh
-          cp README.md dist/atomic-router/README.md
+          # Copy extra config files into standalone bundle
+          cp .env.example "$TARGET_DIR/.env.example" 2>/dev/null || true
+          cp install.sh "$TARGET_DIR/install.sh" 2>/dev/null || true
+          cp README.md "$TARGET_DIR/README.md" 2>/dev/null || true
 
-          cd dist
-          tar -czf ../atomic-router-linux-x64.tar.gz atomic-router
-          cd ..
+          # Create lean archive in 1 second
+          tar -czf atomic-router-linux-x64.tar.gz -C "$TARGET_DIR" .
           ls -lh atomic-router-linux-x64.tar.gz
 
       - name: Create GitHub Release
@@ -66,15 +58,20 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
           tag_name: v3.8.50
-          name: "⚡ AtomicRouter v3.8.50 (OmniRoute Sync)"
+          name: "⚡ AtomicRouter v3.8.50 Standalone Release"
           body: |
-            ## ⚡ AtomicRouter v1.0.0 (Pre-Compiled Standalone Release)
+            ## ⚡ AtomicRouter v3.8.50 (Pre-Compiled Standalone Release)
             
-            This is the pre-compiled standalone package for ultra-fast deployment on low-spec VPS (512MB - 1GB RAM).
+            Pure Gateway Fork of OmniRoute v3.8.50 (330+ Providers, Combos, Proxy Pool & Stream Compression).
             
             ### 🚀 1-Line Quick Install on Any VPS:
             ```bash
             curl -fsSL https://raw.githubusercontent.com/dianrestu/atomic-router/main/install.sh | bash
+            ```
+            
+            ### ⚡ Update Command (For Existing Installations):
+            ```bash
+            sudo atomic-router update
             ```
           files: |
             atomic-router-linux-x64.tar.gz
