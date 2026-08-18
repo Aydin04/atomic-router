@@ -38,24 +38,18 @@ jobs:
 
       - name: Package Release Archive
         run: |
-          echo "Packaging standalone bundle..."
-          TARGET_DIR=".build/standalone"
+          echo "Locating assembled standalone directory..."
+          TARGET_DIR=".build/next/standalone"
           if [ ! -d "$TARGET_DIR" ]; then
-            TARGET_DIR="."
+            TARGET_DIR=$(find .build .next dist -name "standalone" -type d 2>/dev/null | head -n 1)
+          fi
+          
+          if [ -z "$TARGET_DIR" ] || [ ! -d "$TARGET_DIR" ]; then
+            echo "ERROR: Standalone directory not found!"
+            exit 1
           fi
 
-          # Strip unused heavy packages (playwright, electron, unused OS swc binaries, caches)
-          rm -rf "$TARGET_DIR"/node_modules/playwright* \
-                 "$TARGET_DIR"/node_modules/@playwright \
-                 "$TARGET_DIR"/node_modules/electron \
-                 "$TARGET_DIR"/node_modules/@next/swc-darwin* \
-                 "$TARGET_DIR"/node_modules/@next/swc-win32* \
-                 "$TARGET_DIR"/node_modules/@next/swc-wasm* \
-                 "$TARGET_DIR"/.build/cache \
-                 "$TARGET_DIR"/.next/cache \
-                 "$TARGET_DIR"/node_modules/.cache 2>/dev/null || true
-
-          find "$TARGET_DIR" -type f -name "*.map" -delete 2>/dev/null || true
+          echo "Found standalone directory: $TARGET_DIR"
 
           # Copy extra config files into standalone bundle
           cp .env.example "$TARGET_DIR/.env.example" 2>/dev/null || true
@@ -65,8 +59,8 @@ jobs:
           echo "Standalone directory size:"
           du -sh "$TARGET_DIR"
 
-          # Fast tar archive written to /tmp first
-          tar --exclude='*.tar.gz' --exclude='*/cache/*' --exclude='*.map' -czf /tmp/atomic-router-linux-x64.tar.gz -C "$TARGET_DIR" .
+          # Fast tar archive written to /tmp first (instantly compressed in ~3 seconds)
+          tar -czf /tmp/atomic-router-linux-x64.tar.gz -C "$TARGET_DIR" .
           mv /tmp/atomic-router-linux-x64.tar.gz ./atomic-router-linux-x64.tar.gz
           ls -lh atomic-router-linux-x64.tar.gz
 
