@@ -50,7 +50,7 @@ jobs:
           cp README.md "$TARGET_DIR/README.md" 2>/dev/null || true
 
           # Create lean archive in 1 second
-          tar -czf atomic-router-linux-x64.tar.gz -C "$TARGET_DIR" .
+          tar -c -C "$TARGET_DIR" . | gzip -1 > atomic-router-linux-x64.tar.gz
           ls -lh atomic-router-linux-x64.tar.gz
 
       - name: Create GitHub Release
