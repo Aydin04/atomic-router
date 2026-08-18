@@ -44,13 +44,17 @@ jobs:
             TARGET_DIR="."
           fi
 
+          # Prune cache and sourcemaps
+          find "$TARGET_DIR" -type d -name "cache" -exec rm -rf {} + 2>/dev/null || true
+          find "$TARGET_DIR" -type f -name "*.map" -delete 2>/dev/null || true
+
           # Copy extra config files into standalone bundle
           cp .env.example "$TARGET_DIR/.env.example" 2>/dev/null || true
           cp install.sh "$TARGET_DIR/install.sh" 2>/dev/null || true
           cp README.md "$TARGET_DIR/README.md" 2>/dev/null || true
 
-          # Create lean archive in 1 second
-          tar -c -C "$TARGET_DIR" . | gzip -1 > atomic-router-linux-x64.tar.gz
+          # Fast tar archive
+          tar --exclude='*/cache/*' --exclude='*.map' -czf atomic-router-linux-x64.tar.gz -C "$TARGET_DIR" .
           ls -lh atomic-router-linux-x64.tar.gz
 
       - name: Create GitHub Release
