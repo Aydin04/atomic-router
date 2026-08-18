@@ -38,6 +38,7 @@
   - [LangChain & LlamaIndex](#langchain--llamaindex)
   - [cURL](#curl)
 - [Configuration & Security](#-configuration--security)
+- [Upstream Lineage & Acknowledgments](#-upstream-lineage--acknowledgments)
 - [License](#-license)
 
 ---
@@ -81,8 +82,12 @@
 ### 🔌 330+ AI Providers Unified
 - **Tier-1 Commercial**: OpenAI, Anthropic, Google Gemini / Antigravity Cloud Assist, xAI Grok, Azure OpenAI, AWS Bedrock, Mistral AI, Cohere.
 - **High-Speed Aggregators**: OpenRouter, DeepInfra, Groq, Fireworks AI, Together AI, Cerebras, Sambanova, Novita, Hyperbolic.
+- **Free Public & Community**: DuckDuckGo AI, Puter, Pollinations, LMArena, FreeMiMo.
 - **Local & Self-Hosted**: Ollama, LM Studio, vLLM, LocalAI, Triton, Llamafile.
 - **Universal Translation**: Automatically translates standard OpenAI chat completions, responses, function/tool calling, and streaming SSE tokens to provider-specific formats (e.g., Anthropic Messages API, Gemini Content API).
+
+> 📖 **Full Provider Matrix & Setup Guides:**  
+> For comprehensive setup instructions, parameter maps, and authentication guides for all 330+ individual providers, please explore the upstream [OmniRoute Provider Documentation](https://github.com/diegosouzapw/OmniRoute#-documentation).
 
 ### 🔀 Smart Combos & 19 Dynamic Routing Strategies
 Combine multiple models, accounts, and providers into a unified virtual model:
@@ -327,6 +332,19 @@ AtomicRouter stores all configurations in a lightweight, transaction-safe SQLite
 ### Database Backup & Portability
 - Navigate to **Dashboard → Settings → Backup & Restore**.
 - Generate encrypted `.tar.gz` snapshots or raw SQLite backups to easily replicate setups across cloud environments.
+
+---
+
+## 🏛️ Upstream Lineage & Acknowledgments
+
+AtomicRouter is built upon the robust provider translation and routing architecture of **[OmniRoute](https://github.com/diegosouzapw/OmniRoute)**, created by [Diego Souza](https://github.com/diegosouzapw).
+
+While OmniRoute is an all-in-one AI platform (incorporating agent frameworks, vector memory, conductor suites, and developer toolkits), **AtomicRouter** focuses exclusively as a **dedicated, ultra-lightweight AI Gateway and Smart Router**:
+- **Pure Gateway Specialization**: 100% focused on proxying, model cascades, multi-account rotation, and upstream resilience.
+- **Minimal Footprint**: Streamlined architecture optimized for ~50MB idle RAM and zero CPU lockup on low-resource machines.
+- **Pre-Compiled Universal Distribution**: Zero-config standalone binaries for Linux, macOS, Windows, Raspberry Pi, and Android Termux.
+
+We extend our deep appreciation to Diego Souza and the OmniRoute community for developing the foundational translation engine and provider ecosystem.
 
 ---
 
