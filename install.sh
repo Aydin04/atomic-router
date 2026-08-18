@@ -69,14 +69,28 @@ fi
 
 cd "$INSTALL_DIR"
 
+
 # 3. Setup configuration & dependencies
-echo -e "${BLUE}[3/5] Initializing configuration and dependencies...${NC}"
+echo -e "${BLUE}[3/5] Initializing unique cryptographic configuration...\${NC}"
 if [ ! -f "$INSTALL_DIR/.env" ]; then
   if [ -f "$INSTALL_DIR/.env.example" ]; then
     cp "$INSTALL_DIR/.env.example" "$INSTALL_DIR/.env"
   else
-    echo "PORT=${PORT}" > "$INSTALL_DIR/.env"
+    touch "$INSTALL_DIR/.env"
   fi
+
+  # Generate random cryptographic secrets unique per machine
+  RAND_SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
+  RAND_AUTH=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
+
+  sed -i "s|^JWT_SECRET=.*|JWT_SECRET=$RAND_SECRET|" "$INSTALL_DIR/.env" 2>/dev/null || true
+  sed -i "s|^OMNIROUTE_SECRET_KEY=.*|OMNIROUTE_SECRET_KEY=$RAND_SECRET|" "$INSTALL_DIR/.env" 2>/dev/null || true
+  sed -i "s|^BETTER_AUTH_SECRET=.*|BETTER_AUTH_SECRET=$RAND_AUTH|" "$INSTALL_DIR/.env" 2>/dev/null || true
+
+  if ! grep -q "PORT=" "$INSTALL_DIR/.env"; then
+    echo "PORT=${PORT}" >> "$INSTALL_DIR/.env"
+  fi
+  echo -e "${GREEN}[✓] Generated unique local encryption keys for this VPS.\${NC}"
 fi
 
 # Determine start command
