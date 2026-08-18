@@ -558,18 +558,7 @@ export async function registerNodejs(): Promise<void> {
           console.warn("[STARTUP] Arena ELO sync failed to start (non-fatal):", msg);
         }),
 
-      // Radar daily feed sync: only arms itself when RADAR_ENABLED AND the user
-      // opt-in are already on (flag-off boot stays timer-free — Radar inertia
-      // contract). Non-blocking, never fatal.
-      import("@/lib/radar/scheduler")
-        .then((m) => {
-          const started = m.initRadarSyncScheduler();
-          if (started) console.log("[STARTUP] Radar sync scheduler initialized");
-        })
-        .catch((err: unknown) => {
-          const msg = err instanceof Error ? err.message : String(err);
-          console.warn("[STARTUP] Radar sync scheduler failed to start (non-fatal):", msg);
-        }),
+      
 
       // Pricing sync: opt-in external pricing data (self-gated by PRICING_SYNC_ENABLED inside
       // initPricingSync). Non-blocking, never fatal.
@@ -614,27 +603,9 @@ export async function registerNodejs(): Promise<void> {
           console.warn("[STARTUP] context-window reconcile failed to start (non-fatal):", msg);
         }),
 
-      // TV6 typed memory decay: optional periodic sweep of decayed episodic memories.
-      // Doubly opt-in (no-op unless MEMORY_TYPED_DECAY_ENABLED=true AND
-      // MEMORY_TYPED_DECAY_SWEEP_INTERVAL>0). Never deletes by default. Never fatal.
-      import("@/lib/memory/typedDecay")
-        .then((m) => m.startMemoryDecaySweep())
-        .catch((err: unknown) => {
-          const msg = err instanceof Error ? err.message : String(err);
-          console.warn("[STARTUP] memory decay sweep failed to start (non-fatal):", msg);
-        }),
+      
 
-      // MemoryBackend provider pattern (PR #8752): initialize configured memory
-      // backends from settings (sqlite, obsidian, notion, custom HTTP, etc.).
-      // Reads the DB settings synchronously (non-blocking, never fatal). Must
-      // run after the DB is ready AND after getSettings/applyRuntimeSettings so
-      // memory backend config is hydrated.
-      import("@/lib/memory/index")
-        .then((m) => m.initMemoryBackends())
-        .catch((err: unknown) => {
-          const msg = err instanceof Error ? err.message : String(err);
-          console.warn("[STARTUP] memory backend initialization failed (non-fatal):", msg);
-        }),
+      
 
       // Backup schedule (#8513): execute `backup-schedule.json` cron server-side.
       // Reads the schedule written by `omniroute backup auto enable` and fires
