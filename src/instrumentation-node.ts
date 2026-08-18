@@ -309,9 +309,7 @@ export async function registerNodejs(): Promise<void> {
     { startCleanupScheduler },
     { registerDefaultGuardrails },
     { ensurePersistentManagementPasswordHash },
-    { skillExecutor },
-    { registerBuiltinSkills },
-  ] = await Promise.all([
+          ] = await Promise.all([
     import("@/lib/gracefulShutdown"),
     import("@/lib/apiBridgeServer"),
     import("@/domain/quotaCache"),
@@ -324,9 +322,7 @@ export async function registerNodejs(): Promise<void> {
     import("@/lib/db/cleanup"),
     import("@/lib/guardrails"),
     import("@/lib/auth/managementPassword"),
-    // import("@/lib/skills/executor"),
-    // import("@/lib/skills/builtins"),
-  ]);
+          ]);
 
   // Proxy health scheduler (auto-removes dead proxies on interval)
   await import("@/lib/proxyHealth/scheduler");
@@ -338,11 +334,9 @@ export async function registerNodejs(): Promise<void> {
   initApiBridgeServer();
   startSpendBatchWriter();
   registerDefaultGuardrails();
-  // registerBuiltinSkills(skillExecutor);
-  console.log("[STARTUP] Spend batch writer started");
+    console.log("[STARTUP] Spend batch writer started");
   console.log("[STARTUP] Guardrail registry initialized");
-  console.log("[STARTUP] Builtin skill handlers registered");
-  if (!isBackgroundServicesDisabled()) {
+    if (!isBackgroundServicesDisabled()) {
     startBackgroundRefresh();
     console.log("[STARTUP] Quota cache background refresh started");
     startProviderLimitsSyncScheduler();

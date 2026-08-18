@@ -16,8 +16,6 @@ import { startRuntimeConfigHotReload } from "./lib/config/hotReload";
 import { startSpendBatchWriter } from "./lib/spend/batchWriter";
 import { registerDefaultGuardrails } from "./lib/guardrails";
 import { ensurePersistentManagementPasswordHash } from "./lib/auth/managementPassword";
-import { skillExecutor } from "./lib/skills/executor";
-import { registerBuiltinSkills } from "./lib/skills/builtins";
 import { createLogger } from "./shared/utils/logger";
 
 const startupLog = createLogger("server-init");
@@ -99,11 +97,9 @@ async function startServer() {
     // Initialize cloud sync
     startSpendBatchWriter();
     registerDefaultGuardrails();
-    registerBuiltinSkills(skillExecutor);
-    startupLog.info("Spend batch writer started");
+        startupLog.info("Spend batch writer started");
     startupLog.info("Guardrail registry initialized");
-    startupLog.info("Builtin skill handlers registered");
-
+    
     // Load active plugins on startup so they survive restarts
     try {
       const { pluginManager } = await import("./lib/plugins/manager");
