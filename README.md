@@ -3,18 +3,20 @@
 # ⚡ AtomicRouter
 
 **Ultra-Lightweight Universal AI Gateway & Smart Proxy**
-*(Streamlined Pure Gateway Fork of OmniRoute — 330+ Providers, Combos, Multi-Account Pool & Zero Bloat)*
+*(Streamlined Pure Gateway Fork — 330+ Providers, Combos, Multi-Account Pool & Native Stream Compression)*
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Node: 22 LTS](https://img.shields.io/badge/Node.js-22%20LTS-green.svg)](https://nodejs.org)
+[![Platform: Linux | macOS | Windows](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-blueviolet.svg)](#)
 [![RAM: 512MB+](https://img.shields.io/badge/RAM-512MB%20Optimized-cyan.svg)](#)
-[![Speed: Instant Install](https://img.shields.io/badge/Install-30%20Seconds-orange.svg)](#)
 
 </div>
 
 ---
 
-## 🚀 1-Line Quick Install (Any Linux VPS)
+## 🚀 Quick Install & Run
+
+### 🐧 Linux / VPS (1-Line Automated Installer)
 
 Deploy **AtomicRouter** instantly on any Ubuntu / Debian / CentOS / Rocky Linux VPS (including low-spec 512MB – 1GB RAM machines):
 
@@ -22,16 +24,36 @@ Deploy **AtomicRouter** instantly on any Ubuntu / Debian / CentOS / Rocky Linux 
 curl -fsSL https://raw.githubusercontent.com/dianrestu/atomic-router/main/install.sh | sudo bash
 ```
 
-> ⚡ **How it works**: The installer downloads a pre-compiled standalone release package, auto-provisions Node.js 22 LTS, generates unique local cryptographic keys, and configures a resilient systemd background service in **under 30 seconds**.
+---
+
+### 🪟 Windows (Pre-Compiled Standalone)
+
+1. Download **`atomic-router-windows-x64.zip`** from [Latest Releases](https://github.com/dianrestu/atomic-router/releases/latest).
+2. Extract the `.zip` archive to any folder.
+3. Double-click **`start.bat`**.
+4. Open your browser at **`http://localhost:20128/`**.
+
+---
+
+### 🍎 macOS (Intel & Apple Silicon M1/M2/M3/M4)
+
+1. Download **`atomic-router-macos-universal.tar.gz`** from [Latest Releases](https://github.com/dianrestu/atomic-router/releases/latest).
+2. Extract:
+   ```bash
+   tar -xzf atomic-router-macos-universal.tar.gz
+   cd atomic-router
+   ./start.sh
+   ```
+3. Open your browser at **`http://localhost:20128/`**.
 
 ---
 
 ## ⚡ Convenient Management CLI (`atomic-router`)
 
-Once installed, manage your gateway easily with the global `atomic-router` command:
+On Linux VPS, manage your gateway easily with the global `atomic-router` command:
 
 ```bash
-# Update to latest release (Takes ~5 seconds, keeps 100% database & logins intact)
+# Update to latest release (Keeps 100% database & logins intact)
 sudo atomic-router update
 
 # Check live service status & health
@@ -44,9 +66,6 @@ atomic-router logs
 atomic-router restart
 atomic-router stop
 atomic-router start
-
-# Check current version
-atomic-router version
 ```
 
 ---
@@ -79,7 +98,7 @@ atomic-router version
 - High-efficiency compression for SSE streaming responses and JSON payloads (saves up to 70% bandwidth).
 
 ### 7. 🛡️ Ultra-Low RAM Footprint (~40 MB – 80 MB)
-- Stripped of heavy non-gateway bloatware (Electron, vector databases, browser automation).
+- Stripped of heavy non-gateway bloatware.
 - Runs cold and fast on any 512MB – 1GB VPS with 0% CPU lockup.
 
 ---
@@ -112,7 +131,7 @@ print(response.choices[0].message.content)
 
 ---
 
-## 📄 License & Upstream
+## 📄 License & Credits
 
-- AtomicRouter is a pure streamlined gateway fork of [OmniRoute](https://github.com/diegosouzapw/OmniRoute) by Diego Souza.
+- AtomicRouter is a pure streamlined gateway fork based on [OmniRoute](https://github.com/diegosouzapw/OmniRoute) by Diego Souza.
 - Licensed under the [MIT License](LICENSE).

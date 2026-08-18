@@ -26,6 +26,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
+          sudo apt-get update && sudo apt-get install -y zip
           export NODE_OPTIONS="--max-old-space-size=4096"
           npm install --no-audit --no-fund
 
@@ -36,7 +37,7 @@ jobs:
           if [ ! -f .env ]; then cp .env.example .env; fi
           npm run build
 
-      - name: Package Release Archive
+      - name: Package Release Archives (Linux, macOS, Windows)
         run: |
           echo "Locating assembled standalone directory..."
           TARGET_DIR=".build/next/standalone"
@@ -56,35 +57,91 @@ jobs:
           cp install.sh "$TARGET_DIR/install.sh" 2>/dev/null || true
           cp README.md "$TARGET_DIR/README.md" 2>/dev/null || true
 
-          echo "Standalone directory size:"
-          du -sh "$TARGET_DIR"
+          # Create Unix start script
+          cat << 'SCRIPT' > "$TARGET_DIR/start.sh"
+#!/usr/bin/env bash
+export PORT=${PORT:-20128}
+if [ ! -f .env ]; then
+  if [ -f .env.example ]; then
+    cp .env.example .env
+  else
+    echo "PORT=$PORT" > .env
+  fi
+fi
+exec node server.js
+SCRIPT
+          chmod +x "$TARGET_DIR/start.sh"
 
-          # Fast tar archive written to /tmp first (instantly compressed in ~3 seconds)
+          # Create Windows start script
+          cat << 'WINBATCH' > "$TARGET_DIR/start.bat"
+@echo off
+title AtomicRouter Universal AI Gateway
+set PORT=20128
+if not exist .env (
+  if exist .env.example (
+    copy .env.example .env >nul 2>&1
+  ) else (
+    echo PORT=20128 > .env
+  )
+)
+echo ========================================================
+echo   ⚡ AtomicRouter Universal AI Gateway
+echo   Dashboard: http://localhost:20128/
+echo ========================================================
+node server.js
+pause
+WINBATCH
+
+          # 1. Linux x64 Release
+          echo "Packaging Linux Release..."
           tar -czf /tmp/atomic-router-linux-x64.tar.gz -C "$TARGET_DIR" .
           mv /tmp/atomic-router-linux-x64.tar.gz ./atomic-router-linux-x64.tar.gz
-          ls -lh atomic-router-linux-x64.tar.gz
+
+          # 2. macOS Universal Release
+          echo "Packaging macOS Release..."
+          tar -czf /tmp/atomic-router-macos-universal.tar.gz -C "$TARGET_DIR" .
+          mv /tmp/atomic-router-macos-universal.tar.gz ./atomic-router-macos-universal.tar.gz
+
+          # 3. Windows x64 Release
+          echo "Packaging Windows Release..."
+          (cd "$TARGET_DIR" && zip -r -q /tmp/atomic-router-windows-x64.zip .)
+          mv /tmp/atomic-router-windows-x64.zip ./atomic-router-windows-x64.zip
+
+          ls -lh atomic-router-*.tar.gz atomic-router-*.zip
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
           tag_name: v3.8.50
-          name: "⚡ AtomicRouter v3.8.50 Standalone Release"
+          name: "⚡ AtomicRouter v3.8.50 Multi-Platform Standalone Release"
           body: |
-            ## ⚡ AtomicRouter v3.8.50 (Pre-Compiled Standalone Release)
+            ## ⚡ AtomicRouter v3.8.50 Multi-Platform Standalone Release
             
-            Pure Gateway Fork of OmniRoute v3.8.50 (330+ Providers, Combos, Proxy Pool & Stream Compression).
+            Ultra-Lightweight Universal AI Gateway & Smart Proxy (Linux, macOS, Windows).
             
-            ### 🚀 1-Line Quick Install on Any VPS:
+            ### 🚀 1-Line Quick Install on Linux / VPS:
             ```bash
             curl -fsSL https://raw.githubusercontent.com/dianrestu/atomic-router/main/install.sh | bash
             ```
             
-            ### ⚡ Update Command (For Existing Installations):
+            ### 🪟 Windows (No Build Required):
+            1. Download `atomic-router-windows-x64.zip`
+            2. Extract to a folder
+            3. Double click `start.bat` (Opens at `http://localhost:20128/`)
+            
+            ### 🍎 macOS (Intel / Apple Silicon):
+            1. Download `atomic-router-macos-universal.tar.gz`
+            2. Extract: `tar -xzf atomic-router-macos-universal.tar.gz`
+            3. Run: `./start.sh` (Opens at `http://localhost:20128/`)
+            
+            ### ⚡ Update Command (For Existing VPS Installations):
             ```bash
             sudo atomic-router update
             ```
           files: |
             atomic-router-linux-x64.tar.gz
+            atomic-router-macos-universal.tar.gz
+            atomic-router-windows-x64.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
