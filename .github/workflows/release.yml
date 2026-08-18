@@ -38,17 +38,23 @@ jobs:
 
       - name: Package Release Archive
         run: |
-          # Remove heavy build cache (2GB+) so release package is ultra-lean (~40MB)
-          rm -rf .build/cache
-
           mkdir -p dist/atomic-router
-          cp -r .build dist/atomic-router/
-          cp -r public dist/atomic-router/ 2>/dev/null || true
-          cp -r open-sse dist/atomic-router/ 2>/dev/null || true
-          cp package.json dist/atomic-router/
+
+          # Copy Next.js Standalone build artifacts
+          if [ -d ".build/standalone" ]; then
+            cp -r .build/standalone/* dist/atomic-router/ 2>/dev/null || cp -r .build/standalone/. dist/atomic-router/
+            mkdir -p dist/atomic-router/.build
+            cp -r .build/static dist/atomic-router/.build/static 2>/dev/null || true
+          else
+            cp -r .build dist/atomic-router/
+          fi
+
+          cp -r public dist/atomic-router/public 2>/dev/null || true
+          cp -r open-sse dist/atomic-router/open-sse 2>/dev/null || true
+          cp package.json dist/atomic-router/package.json
           cp .env.example dist/atomic-router/.env.example
-          cp install.sh dist/atomic-router/
-          cp README.md dist/atomic-router/
+          cp install.sh dist/atomic-router/install.sh
+          cp README.md dist/atomic-router/README.md
 
           cd dist
           tar -czf ../atomic-router-linux-x64.tar.gz atomic-router

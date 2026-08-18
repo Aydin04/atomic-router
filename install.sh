@@ -71,8 +71,8 @@ fi
 
 cd "$INSTALL_DIR"
 
-# 3. Setup configuration & install production dependencies
-echo -e "${BLUE}[3/4] Initializing configuration and production dependencies...${NC}"
+# 3. Setup configuration & dependencies
+echo -e "${BLUE}[3/4] Initializing configuration and dependencies...${NC}"
 if [ ! -f "$INSTALL_DIR/.env" ]; then
   if [ -f "$INSTALL_DIR/.env.example" ]; then
     cp "$INSTALL_DIR/.env.example" "$INSTALL_DIR/.env"
@@ -81,9 +81,14 @@ if [ ! -f "$INSTALL_DIR/.env" ]; then
   fi
 fi
 
-# Install dependencies in lightweight mode
-export NODE_OPTIONS="--max-old-space-size=450"
-npm install --omit=dev --no-audit --no-fund 2>/dev/null || npm install --no-audit --no-fund
+# Determine start command
+START_CMD="$(which npm) start"
+if [ -f "$INSTALL_DIR/server.js" ]; then
+  START_CMD="$(which node) server.js"
+else
+  export NODE_OPTIONS="--max-old-space-size=450"
+  npm install --omit=dev --no-audit --no-fund 2>/dev/null || npm install --no-audit --no-fund
+fi
 
 # 4. Setup Systemd Service
 echo -e "${BLUE}[4/4] Setting up systemd background service...${NC}"
@@ -99,7 +104,7 @@ WorkingDirectory=${INSTALL_DIR}
 Environment=NODE_ENV=production
 Environment=PORT=${PORT}
 Environment=NODE_OPTIONS="--max-old-space-size=450"
-ExecStart=$(which npm) start
+ExecStart=${START_CMD}
 Restart=always
 RestartSec=5
 StandardOutput=journal
