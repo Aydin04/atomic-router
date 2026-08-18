@@ -53,8 +53,9 @@ jobs:
           cp install.sh "$TARGET_DIR/install.sh" 2>/dev/null || true
           cp README.md "$TARGET_DIR/README.md" 2>/dev/null || true
 
-          # Fast tar archive
-          tar --exclude='*/cache/*' --exclude='*.map' -czf atomic-router-linux-x64.tar.gz -C "$TARGET_DIR" .
+          # Safe tar archive written to /tmp first (prevents tar self-read loop)
+          tar --exclude='*.tar.gz' --exclude='*/cache/*' --exclude='*.map' -czf /tmp/atomic-router-linux-x64.tar.gz -C "$TARGET_DIR" .
+          mv /tmp/atomic-router-linux-x64.tar.gz ./atomic-router-linux-x64.tar.gz
           ls -lh atomic-router-linux-x64.tar.gz
 
       - name: Create GitHub Release
