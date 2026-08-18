@@ -536,8 +536,8 @@ export async function registerNodejs(): Promise<void> {
 
       // Conductor bridge (PRD Conductor RF1): mirrors OmniConductor hub tasks into the
       // A2A TaskManager via the hub SSE. Opt-in — self-gated on CONDUCTOR_HUB_URL.
-      import("@/lib/conductor/boot").then((m) => {
-        if (m.initConductorBridge()) console.log("[STARTUP] Conductor bridge started");
+      .then((m) => {
+        if (m.
       }).catch((err: unknown) => {
         const msg = err instanceof Error ? err.message : String(err);
         console.warn("[STARTUP] Conductor bridge failed to start (non-fatal):", msg);
