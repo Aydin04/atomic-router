@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# ⚡ AtomicRouter 1-Line Automated Installer
+# ⚡ AtomicRouter 1-Line Automated Installer & CLI Manager
 # Pure Streamlined Universal AI Gateway Fork of OmniRoute
 # Optimized for 512MB - 1GB Low-Spec VPS (Instant Pre-Built Deployment)
 # ==============================================================================
@@ -19,7 +19,6 @@ NC='\033[0m'
 INSTALL_DIR="${INSTALL_DIR:-/opt/atomic-router}"
 PORT="${PORT:-20128}"
 REPO="dianrestu/atomic-router"
-RELEASE_TAG="${RELEASE_TAG:-v1.0.0}"
 RELEASE_URL="https://github.com/${REPO}/releases/latest/download/atomic-router-linux-x64.tar.gz"
 
 echo -e "${CYAN}${BOLD}"
@@ -36,7 +35,7 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 
 # 1. Install Node.js 22 LTS, curl, and tar if missing
-echo -e "${BLUE}[1/4] Checking system dependencies (Node.js 22 LTS, tar, curl)...${NC}"
+echo -e "${BLUE}[1/5] Checking system dependencies (Node.js 22 LTS, tar, curl)...${NC}"
 if ! command -v curl &>/dev/null || ! command -v tar &>/dev/null; then
   apt-get update -y && apt-get install -y curl tar || yum install -y curl tar
 fi
@@ -50,7 +49,7 @@ fi
 echo -e "${GREEN}[✓] Node.js $(node -v) ready.${NC}"
 
 # 2. Download and extract pre-compiled release (No heavy compile on VPS!)
-echo -e "${BLUE}[2/4] Fetching pre-compiled release from GitHub...${NC}"
+echo -e "${BLUE}[2/5] Fetching pre-compiled release from GitHub...${NC}"
 mkdir -p "$INSTALL_DIR"
 TEMP_TAR="/tmp/atomic-router-pkg.tar.gz"
 
@@ -72,7 +71,7 @@ fi
 cd "$INSTALL_DIR"
 
 # 3. Setup configuration & dependencies
-echo -e "${BLUE}[3/4] Initializing configuration and dependencies...${NC}"
+echo -e "${BLUE}[3/5] Initializing configuration and dependencies...${NC}"
 if [ ! -f "$INSTALL_DIR/.env" ]; then
   if [ -f "$INSTALL_DIR/.env.example" ]; then
     cp "$INSTALL_DIR/.env.example" "$INSTALL_DIR/.env"
@@ -91,7 +90,7 @@ else
 fi
 
 # 4. Setup Systemd Service
-echo -e "${BLUE}[4/4] Setting up systemd background service...${NC}"
+echo -e "${BLUE}[4/5] Setting up systemd background service...${NC}"
 cat << SERVICE_EOF > /etc/systemd/system/atomic-router.service
 [Unit]
 Description=AtomicRouter Universal AI Gateway Service
@@ -118,6 +117,84 @@ systemctl daemon-reload
 systemctl enable atomic-router
 systemctl restart atomic-router
 
+# 5. Install Global CLI Command: atomic-router
+echo -e "${BLUE}[5/5] Creating global CLI command (/usr/local/bin/atomic-router)...${NC}"
+cat << 'CLI_EOF' > /usr/local/bin/atomic-router
+#!/usr/bin/env bash
+# AtomicRouter Management CLI
+
+INSTALL_DIR="/opt/atomic-router"
+REPO="dianrestu/atomic-router"
+RELEASE_URL="https://github.com/${REPO}/releases/latest/download/atomic-router-linux-x64.tar.gz"
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+NC='\033[0m'
+
+case "$1" in
+  update|upgrade)
+    echo -e "${CYAN}${BOLD}⚡ Updating AtomicRouter to latest version...${NC}"
+    if [ "$(id -u)" -ne 0 ]; then
+      echo -e "${RED}[ERROR] Please run with sudo: sudo atomic-router update${NC}"
+      exit 1
+    fi
+    TEMP_TAR="/tmp/atomic-router-pkg.tar.gz"
+    echo -e "${BLUE}Downloading latest release...${NC}"
+    curl -fsSL "$RELEASE_URL" -o "$TEMP_TAR"
+    echo -e "${BLUE}Applying update files...${NC}"
+    tar -xzf "$TEMP_TAR" -C /tmp/
+    cp -r /tmp/atomic-router/* "$INSTALL_DIR/"
+    rm -rf /tmp/atomic-router "$TEMP_TAR"
+    echo -e "${BLUE}Restarting service...${NC}"
+    systemctl daemon-reload
+    systemctl restart atomic-router
+    echo -e "${GREEN}${BOLD}🎉 AtomicRouter successfully updated to latest version!${NC}"
+    ;;
+  restart)
+    echo -e "${CYAN}Restarting AtomicRouter service...${NC}"
+    systemctl restart atomic-router
+    echo -e "${GREEN}[✓] Service restarted.${NC}"
+    ;;
+  start)
+    systemctl start atomic-router
+    echo -e "${GREEN}[✓] Service started.${NC}"
+    ;;
+  stop)
+    systemctl stop atomic-router
+    echo -e "${YELLOW}[!] Service stopped.${NC}"
+    ;;
+  status)
+    systemctl status atomic-router
+    ;;
+  logs|log)
+    journalctl -u atomic-router -f
+    ;;
+  version|-v|--version)
+    if [ -f "$INSTALL_DIR/package.json" ]; then
+      VER=$(node -p "require('$INSTALL_DIR/package.json').version" 2>/dev/null || echo "Unknown")
+      echo "⚡ AtomicRouter version: v$VER"
+    else
+      echo "⚡ AtomicRouter (Active)"
+    fi
+    ;;
+  *)
+    echo -e "${CYAN}${BOLD}⚡ AtomicRouter CLI Commands:${NC}"
+    echo "  atomic-router update    - Update to latest version (fast 5s update, preserves DB)"
+    echo "  atomic-router restart   - Restart service"
+    echo "  atomic-router status    - Check service health & status"
+    echo "  atomic-router logs      - View live real-time logs"
+    echo "  atomic-router start     - Start service"
+    echo "  atomic-router stop      - Stop service"
+    echo "  atomic-router version   - Show current version"
+    ;;
+esac
+CLI_EOF
+
+chmod +x /usr/local/bin/atomic-router
+
 # Fetch public IP
 SERVER_IP=$(curl -s -4 ifconfig.me || curl -s -4 api.ipify.org || hostname -I | awk '{print $1}')
 
@@ -130,7 +207,9 @@ echo -e "  🌐 ${BOLD}Dashboard URL:${NC}      http://${SERVER_IP}:${PORT}"
 echo -e "  🤖 ${BOLD}OpenAI Endpoint:${NC}    http://${SERVER_IP}:${PORT}/v1/chat/completions"
 echo -e "  📊 ${BOLD}Models Endpoint:${NC}    http://${SERVER_IP}:${PORT}/v1/models"
 echo ""
-echo -e "  ⚙️  ${BOLD}Service Status:${NC}     systemctl status atomic-router"
-echo -e "  📝 ${BOLD}View Logs:${NC}          journalctl -u atomic-router -f"
-echo -e "  🔄 ${BOLD}Restart:${NC}            systemctl restart atomic-router"
+echo -e "  ⚡ ${BOLD}Convenient CLI Commands:${NC}"
+echo -e "     • Update to latest:  ${CYAN}sudo atomic-router update${NC}"
+echo -e "     • View live logs:    ${CYAN}atomic-router logs${NC}"
+echo -e "     • Check status:      ${CYAN}atomic-router status${NC}"
+echo -e "     • Restart:           ${CYAN}atomic-router restart${NC}"
 echo -e "${CYAN}================================================================${NC}"
