@@ -65,8 +65,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v1.0.0
-          name: "⚡ AtomicRouter v1.0.0 Standalone Pre-Built Release"
+          tag_name: v3.8.50
+          name: "⚡ AtomicRouter v3.8.50 (OmniRoute Sync)"
           body: |
             ## ⚡ AtomicRouter v1.0.0 (Pre-Compiled Standalone Release)
             

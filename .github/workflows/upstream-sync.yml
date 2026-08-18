@@ -1,0 +1,72 @@
+name: 🔄 Auto-Sync Upstream OmniRoute
+
+on:
+  schedule:
+    # Run daily at 00:00 UTC
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  check-and-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout AtomicRouter
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Fetch Upstream Releases
+        id: upstream
+        run: |
+          UPSTREAM_TAG=$(curl -s https://api.github.com/repos/diegosouzapw/OmniRoute/releases/latest | jq -r .tag_name)
+          if [ -z "$UPSTREAM_TAG" ] || [ "$UPSTREAM_TAG" = "null" ]; then
+            echo "Failed to fetch upstream tag"
+            exit 1
+          fi
+          echo "latest_tag=$UPSTREAM_TAG" >> $GITHUB_OUTPUT
+          echo "Upstream latest release: $UPSTREAM_TAG"
+
+      - name: Compare with Local Version
+        id: compare
+        run: |
+          LOCAL_VER="v$(node -p "require('./package.json').version")"
+          UPSTREAM_TAG="${{ steps.upstream.outputs.latest_tag }}"
+          
+          echo "Local version: $LOCAL_VER"
+          echo "Upstream version: $UPSTREAM_TAG"
+          
+          if [ "$LOCAL_VER" != "$UPSTREAM_TAG" ] && [ "$LOCAL_VER-atomic" != "$UPSTREAM_TAG" ]; then
+            echo "needs_sync=true" >> $GITHUB_OUTPUT
+          else
+            echo "needs_sync=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Sync Core Gateway Modules from Upstream
+        if: steps.compare.outputs.needs_sync == 'true'
+        run: |
+          UPSTREAM_TAG="${{ steps.upstream.outputs.latest_tag }}"
+          echo "Syncing changes from upstream $UPSTREAM_TAG..."
+          
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Clone upstream at specific release tag
+          git clone --depth=1 --branch "$UPSTREAM_TAG" https://github.com/diegosouzapw/OmniRoute.git /tmp/upstream-omniroute
+          
+          # Sync whitelisted core gateway paths
+          cp -r /tmp/upstream-omniroute/open-sse/* open-sse/ 2>/dev/null || true
+          cp -r /tmp/upstream-omniroute/src/shared/* src/shared/ 2>/dev/null || true
+          cp -r /tmp/upstream-omniroute/src/sse/* src/sse/ 2>/dev/null || true
+          cp -r /tmp/upstream-omniroute/src/models/* src/models/ 2>/dev/null || true
+          cp /tmp/upstream-omniroute/package.json package.json
+          
+          # Commit & Push Release Tag
+          git add -A
+          git commit -m "chore(sync): auto-sync core gateway with OmniRoute $UPSTREAM_TAG" || true
+          git push origin main
+          git tag -fa "$UPSTREAM_TAG" -m "Release $UPSTREAM_TAG (Synced from OmniRoute)"
+          git push origin "$UPSTREAM_TAG" --force

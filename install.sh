@@ -20,7 +20,7 @@ INSTALL_DIR="${INSTALL_DIR:-/opt/atomic-router}"
 PORT="${PORT:-20128}"
 REPO="dianrestu/atomic-router"
 RELEASE_TAG="${RELEASE_TAG:-v1.0.0}"
-RELEASE_URL="https://github.com/${REPO}/releases/download/${RELEASE_TAG}/atomic-router-linux-x64.tar.gz"
+RELEASE_URL="https://github.com/${REPO}/releases/latest/download/atomic-router-linux-x64.tar.gz"
 
 echo -e "${CYAN}${BOLD}"
 echo "================================================================"
