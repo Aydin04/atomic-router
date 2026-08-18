@@ -7,62 +7,60 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Node: 22 LTS](https://img.shields.io/badge/Node.js-22%20LTS-green.svg)](https://nodejs.org)
-[![Platform: Linux | macOS | Windows](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-blueviolet.svg)](#)
+[![Platform: Linux | macOS | Windows | Pi | Termux](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows%20%7C%20Pi%20%7C%20Termux-blueviolet.svg)](#)
 [![RAM: 512MB+](https://img.shields.io/badge/RAM-512MB%20Optimized-cyan.svg)](#)
 
 </div>
 
 ---
 
-## 🚀 Quick Install & Run
+## 🚀 1-Line Quick Installers (Multi-Platform)
 
-### 🐧 Linux / VPS (1-Line Automated Installer)
-
-Deploy **AtomicRouter** instantly on any Ubuntu / Debian / CentOS / Rocky Linux VPS (including low-spec 512MB – 1GB RAM machines):
-
+### 🐧 Linux / VPS / Ubuntu / Debian / CentOS / Arch
 ```bash
 curl -fsSL https://raw.githubusercontent.com/dianrestu/atomic-router/main/install.sh | sudo bash
 ```
 
----
+### 🪟 Windows (1-Line PowerShell)
+Buka **PowerShell** dan jalankan:
+```powershell
+irm https://raw.githubusercontent.com/dianrestu/atomic-router/main/install.ps1 | iex
+```
+*(Atau unduh file zip `atomic-router-windows-x64.zip` dari [Releases](https://github.com/dianrestu/atomic-router/releases/latest) lalu double-click `start.bat`)*
 
-### 🪟 Windows (Pre-Compiled Standalone)
+### 🍎 macOS (Apple Silicon & Intel)
+```bash
+curl -fsSL https://raw.githubusercontent.com/dianrestu/atomic-router/main/install.sh | bash
+```
 
-1. Download **`atomic-router-windows-x64.zip`** from [Latest Releases](https://github.com/dianrestu/atomic-router/releases/latest).
-2. Extract the `.zip` archive to any folder.
-3. Double-click **`start.bat`**.
-4. Open your browser at **`http://localhost:20128/`**.
+### 🍓 Raspberry Pi / Orange Pi / Linux ARM64
+```bash
+curl -fsSL https://raw.githubusercontent.com/dianrestu/atomic-router/main/install.sh | sudo bash
+```
 
----
-
-### 🍎 macOS (Intel & Apple Silicon M1/M2/M3/M4)
-
-1. Download **`atomic-router-macos-universal.tar.gz`** from [Latest Releases](https://github.com/dianrestu/atomic-router/releases/latest).
-2. Extract:
-   ```bash
-   tar -xzf atomic-router-macos-universal.tar.gz
-   cd atomic-router
-   ./start.sh
-   ```
-3. Open your browser at **`http://localhost:20128/`**.
+### 📱 Android Termux
+Buka aplikasi **Termux** dan jalankan:
+```bash
+curl -fsSL https://raw.githubusercontent.com/dianrestu/atomic-router/main/install.sh | bash
+```
 
 ---
 
 ## ⚡ Convenient Management CLI (`atomic-router`)
 
-On Linux VPS, manage your gateway easily with the global `atomic-router` command:
+Pada Linux VPS atau Termux, kelola gateway Anda dengan mudah melalui perintah global `atomic-router`:
 
 ```bash
-# Update to latest release (Keeps 100% database & logins intact)
+# Update ke rilis terbaru (Mempertahankan 100% database, akun & login)
 sudo atomic-router update
 
-# Check live service status & health
+# Cek status kesehatan gateway
 atomic-router status
 
-# View live real-time request logs
+# Lihat log request secara real-time
 atomic-router logs
 
-# Restart or stop gateway
+# Restart / Start / Stop service
 atomic-router restart
 atomic-router stop
 atomic-router start
@@ -73,9 +71,9 @@ atomic-router start
 ## 🌟 Key Features (Pure Gateway Engine)
 
 ### 1. 🔀 Smart Combos & Auto-Fallback Routing
-- Combine multiple models or providers into a single virtual OpenAI-compatible model endpoint.
-- **19 Routing Strategies**: Priority Fallback, Weighted, Round-Robin, Least-Used, Headroom, Context-Optimized, Fusion, and Auto.
-- Automatic circuit breaker with exponential backoff on `429 (Rate Limit)` and `503 (Overloaded)`.
+- Gabungkan banyak model/provider ke dalam 1 virtual endpoint OpenAI-compatible.
+- **19 Strategi Routing**: Priority Fallback, Weighted, Round-Robin, Least-Used, Headroom, Context-Optimized, Fusion, dan Auto.
+- Automatic circuit breaker dengan exponential backoff pada `429 (Rate Limit)` dan `503 (Overloaded)`.
 
 ### 2. 🔌 330+ Supported AI Providers Out-of-the-Box
 - **Proprietary & Enterprise**: OpenAI, Anthropic, Google Gemini / Antigravity Cloud Assist, xAI Grok, Azure, AWS Bedrock, Kiro, Codex.
@@ -84,32 +82,32 @@ atomic-router start
 - **Local Self-Hosted**: Ollama, LM Studio, vLLM, Triton, Llamafile.
 
 ### 3. 👥 Multi-Account Connection Pool per Provider
-- Connect **multiple accounts** for any provider (e.g. 5 Claude accounts, 3 Google Antigravity accounts, 10 OpenAI keys).
-- Transparent auto-rotation and instant failover when one account exhausts its rate limit or quota.
+- Hubungkan **banyak akun sekaligus** untuk provider yang sama (contoh: 5 akun Claude, 3 akun Google Antigravity, 10 API keys OpenAI).
+- Rotasi otomatis dan failover instan saat satu akun kehabisan kuota atau terkena rate limit.
 
 ### 4. 🌐 Upstream Proxy Pools & IP Rotation
-- Assign dedicated HTTP / SOCKS5 proxies per provider or rotate dynamically across proxy pools to prevent geo-blocking and IP bans.
+- Konfigurasi HTTP / SOCKS5 proxy khusus per provider atau rotasi dinamis proxy pool untuk mencegah geo-blocking dan IP ban.
 
 ### 5. 🗄️ Full Database Backup, Export & Import
-- Seamlessly backup and restore all accounts, OAuth tokens, combos, and proxy configs between VPS servers.
-- Supports `.tar.gz` database archive, raw SQLite snapshots, and JSON settings export/import.
+- Backup dan restore database SQLite, seluruh akun, token OAuth, dan combos antar server VPS dengan mudah.
+- Mendukung format `.tar.gz`, raw `.sqlite`, dan export/import JSON.
 
 ### 6. 🗜️ Native Brotli & Gzip Stream Compression
-- High-efficiency compression for SSE streaming responses and JSON payloads (saves up to 70% bandwidth).
+- Kompresi efisiensi tinggi untuk SSE streaming responses dan JSON payloads (menghemat bandwidth hingga 70%).
 
 ### 7. 🛡️ Ultra-Low RAM Footprint (~40 MB – 80 MB)
-- Stripped of heavy non-gateway bloatware.
-- Runs cold and fast on any 512MB – 1GB VPS with 0% CPU lockup.
+- Bebas dari bloatware non-gateway yang berat.
+- Berjalan ringan dan dingin pada VPS 512MB – 1GB dengan 0% CPU lockup.
 
 ---
 
 ## 🔌 Client Integrations (Cursor, Cline, Python, OpenAI SDK)
 
-Point your tools to your AtomicRouter instance:
+Arahkan tools coding atau AI client favorit Anda ke instance AtomicRouter:
 
 ### Cursor / Cline / Roo Code / OpenWebUI
-- **Base URL**: `http://<your-vps-ip>:20128/v1`
-- **API Key**: `Bearer <your-api-key>` (Configurable in Dashboard)
+- **Base URL**: `http://<ip-vps-anda>:20128/v1`
+- **API Key**: `Bearer <api-key-anda>` (Bisa diatur di Dashboard)
 
 ### Python (OpenAI SDK)
 
@@ -117,12 +115,12 @@ Point your tools to your AtomicRouter instance:
 from openai import OpenAI
 
 client = OpenAI(
-    base_url="http://<your-vps-ip>:20128/v1",
+    base_url="http://<ip-vps-anda>:20128/v1",
     api_key="your-atomic-router-key",
 )
 
 response = client.chat.completions.create(
-    model="claude-3-7-sonnet-20250219",  # or any combo name like "smart-combo"
+    model="claude-3-7-sonnet-20250219",  # atau nama combo seperti "smart-combo"
     messages=[{"role": "user", "content": "Hello!"}],
 )
 
