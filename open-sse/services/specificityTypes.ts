@@ -30,7 +30,6 @@ export interface RuleInput {
   messages: Array<{ role?: string; content?: string | unknown }>;
   systemPrompt?: string;
   tools?: Array<{
-    type?: string;
     function?: { name: string; description?: string; parameters?: unknown };
   }>;
   model?: string;

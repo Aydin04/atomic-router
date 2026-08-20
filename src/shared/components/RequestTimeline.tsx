@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
 import { getHttpStatusStyle } from "@/shared/constants/colors";
 import { copyToClipboard } from "@/shared/utils/clipboard";
 import RequestLoggerDetail from "@/shared/components/RequestLoggerDetail";
@@ -47,18 +46,18 @@ function computeBarRange(log: TimelineLog, nowMs: number): { startMs: number; en
   return { startMs: ts - (log.duration || 0), endMs: ts };
 }
 
-const MODE_META: Record<ViewMode, { labelKey: string; descriptionKey: string }> = {
+const MODE_META: Record<ViewMode, { label: string; description: string }> = {
   follow: {
-    labelKey: "follow",
-    descriptionKey: "followDescription",
+    label: "Follow",
+    description: "Axis scrolls left, NOW line stays at 75%",
   },
   live: {
-    labelKey: "now",
-    descriptionKey: "nowDescription",
+    label: "Now",
+    description: "Jump to current time, NOW line resets to center",
   },
   pan: {
-    labelKey: "pan",
-    descriptionKey: "panDescription",
+    label: "Pan",
+    description: "Drag to explore, background is frozen",
   },
 };
 
@@ -138,7 +137,6 @@ export default function RequestTimeline({
   initialSelectedId?: string | null;
 } = {}) {
   const router = useRouter();
-  const t = useTranslations("requestTimeline");
   const [logs, setLogs] = useState<TimelineLog[]>([]);
   const [mode, setMode] = useState<ViewMode>("follow");
   const [zoom, setZoom] = useState(1);
@@ -546,7 +544,7 @@ export default function RequestTimeline({
         style={{ height: HEADER_HEIGHT }}
       >
         <div className="flex items-center gap-3">
-          <h2 className="text-sm font-semibold text-text-main">{t("title")}</h2>
+          <h2 className="text-sm font-semibold text-text-main">Request Timeline</h2>
           <span className="text-[10px] text-text-muted font-mono">
             {visibleLogs.length} visible / {logs.length} total
           </span>
@@ -558,14 +556,14 @@ export default function RequestTimeline({
               <button
                 key={m}
                 onClick={() => handleModeChange(m)}
-                title={t(`modes.${MODE_META[m].descriptionKey}`)}
+                title={MODE_META[m].description}
                 className={`px-2.5 py-1 text-[11px] font-medium transition-colors ${
                   mode === m
                     ? "bg-primary text-white"
                     : "bg-bg-subtle text-text-muted hover:text-text-main"
                 }`}
               >
-                {t(`modes.${MODE_META[m].labelKey}`)}
+                {MODE_META[m].label}
               </button>
             ))}
           </div>
@@ -574,7 +572,7 @@ export default function RequestTimeline({
             title={`Jump to current time, NOW line resets to position ${Math.round(nowLineX)}%`}
             className="px-2 py-1 text-[11px] text-text-muted hover:text-text-main bg-bg-subtle rounded-md border border-border transition-colors"
           >
-            {t("reset")}
+            Reset
           </button>
           {/* Zoom */}
           <div className="flex items-center gap-1 rounded-lg border border-border overflow-hidden">
@@ -720,17 +718,17 @@ export default function RequestTimeline({
               style={{ backgroundColor: getStatusColor(hoveredLog.status, hoveredLog.active) }}
             />
             <span className="text-[11px] font-semibold text-text-main">
-              {hoveredLog.model || t("unknownModel")}
+              {hoveredLog.model || "unknown"}
             </span>
             {hoveredLog.active && (
               <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 font-medium">
-                {t("active")}
+                active
               </span>
             )}
           </div>
           <div className="space-y-0.5 text-[10px] text-text-muted font-mono">
             <div className="flex justify-between gap-4">
-              <span>{t("started")}</span>
+              <span>Started</span>
               <span>
                 {(() => {
                   const ts = new Date(hoveredLog.timestamp).getTime();
@@ -744,7 +742,7 @@ export default function RequestTimeline({
             </div>
             {!hoveredLog.active && (
               <div className="flex justify-between gap-4">
-                <span>{t("ended")}</span>
+                <span>Ended</span>
                 <span>
                   {new Date(
                     hoveredLog.completed
@@ -755,7 +753,7 @@ export default function RequestTimeline({
               </div>
             )}
             <div className="flex justify-between gap-4">
-              <span>{t("duration")}</span>
+              <span>Duration</span>
               <span>
                 {hoveredLog.active
                   ? `~${Math.round((nowMs - computeBarRange(hoveredLog, nowMs).startMs) / 1000).toLocaleString()}s`
@@ -763,17 +761,17 @@ export default function RequestTimeline({
               </span>
             </div>
             <div className="flex justify-between gap-4">
-              <span>{t("status")}</span>
-              <span>{hoveredLog.status || t("pending")}</span>
+              <span>Status</span>
+              <span>{hoveredLog.status || "pending"}</span>
             </div>
             {hoveredLog.provider && (
               <div className="flex justify-between gap-4">
-                <span>{t("provider")}</span>
+                <span>Provider</span>
                 <span>{hoveredLog.provider}</span>
               </div>
             )}
             <div className="flex justify-between gap-4">
-              <span>{t("tokens")}</span>
+              <span>Tokens</span>
               <span>
                 {hoveredLog.tokens.in.toLocaleString()} / {hoveredLog.tokens.out.toLocaleString()}
               </span>
@@ -801,25 +799,22 @@ export default function RequestTimeline({
         </div>
         <div className="flex items-center gap-1">
           <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: "#6366F1" }} />
-          <span className="text-text-muted">{t("active")}</span>
+          <span className="text-text-muted">Active</span>
         </div>
         <div className="flex items-center gap-1">
           <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: "#6B7280" }} />
-          <span className="text-text-muted">{t("other")}</span>
+          <span className="text-text-muted">Other</span>
         </div>
         <div className="ml-4 flex items-center gap-1.5 text-text-muted">
           <div className="w-3 border-t border-dashed border-slate-400/40" />
-          <span>{t("tenMinutes")}</span>
+          <span>10min</span>
           <div className="w-3 border-t border-slate-400/60 ml-2" />
-          <span>{t("hour")}</span>
+          <span>hour</span>
           <div className="w-3 border-t-2 border-accent/40 ml-2" />
-          <span>{t("day")}</span>
+          <span>day</span>
         </div>
-        <div
-          className="ml-auto text-text-muted italic"
-          title={t(`modes.${MODE_META[mode].descriptionKey}`)}
-        >
-          {t(`modes.${MODE_META[mode].descriptionKey}`)}
+        <div className="ml-auto text-text-muted italic" title={MODE_META[mode].description}>
+          {MODE_META[mode].description}
         </div>
       </div>
 

@@ -190,31 +190,15 @@ export function getBackgroundTaskReason(
   const messages = toMessageArray(typedBody.messages ?? typedBody.input ?? []);
   if (!Array.isArray(messages) || messages.length === 0) return null;
 
-  // Derive system content from messages array (OpenAI format) or top-level
-  // system field (Anthropic format).
+  // Find system message
   const systemMsg = messages.find(
     (message: BackgroundMessage) => message.role === "system" || message.role === "developer"
   );
-  let systemContent = "";
-  if (systemMsg && typeof systemMsg.content === "string") {
-    systemContent = systemMsg.content.toLowerCase();
-  } else if (!systemMsg) {
-    // Anthropic top-level system field: string or array of text blocks
-    const raw = (typedBody as Record<string, unknown>).system;
-    if (typeof raw === "string") {
-      systemContent = raw.toLowerCase();
-    } else if (Array.isArray(raw)) {
-      systemContent = raw
-        .map((part) =>
-          part && typeof (part as { text?: unknown }).text === "string"
-            ? (part as { text: string }).text
-            : ""
-        )
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-    }
-  }
+  if (!systemMsg) return null;
+
+  const systemContent =
+    typeof systemMsg.content === "string" ? systemMsg.content.toLowerCase() : "";
+
   if (!systemContent) return null;
 
   // Check against detection patterns

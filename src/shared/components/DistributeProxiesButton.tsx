@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { useTranslations } from "next-intl";
 
 type ButtonState = "idle" | "distributing" | "complete";
 
@@ -23,7 +22,6 @@ export default function DistributeProxiesButton({
   size = "md",
 }: DistributeProxiesButtonProps) {
   const [state, setState] = useState<ButtonState>("idle");
-  const t = useTranslations("sharedComponents.distributeProxies");
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -46,7 +44,8 @@ export default function DistributeProxiesButton({
 
   const isDisabled = disabled || state === "distributing";
 
-  const sizeClasses = size === "sm" ? "px-2 py-1 text-[11px]" : "px-3 py-1.5 text-xs";
+  const sizeClasses =
+    size === "sm" ? "px-2 py-1 text-[11px]" : "px-3 py-1.5 text-xs";
 
   const stateClasses =
     state === "distributing"
@@ -56,12 +55,7 @@ export default function DistributeProxiesButton({
         : "bg-bg-subtle border-border text-text-muted hover:text-text-primary hover:border-primary/40";
 
   const icon = state === "distributing" ? "sync" : state === "complete" ? "check" : "swap_horiz";
-  const displayLabel =
-    state === "distributing"
-      ? t("distributing")
-      : state === "complete"
-        ? t("complete")
-        : label || t("defaultLabel");
+  const displayLabel = state === "distributing" ? "Distributing..." : state === "complete" ? "Complete" : label;
 
   return (
     <button
@@ -71,9 +65,7 @@ export default function DistributeProxiesButton({
       title={displayLabel}
       aria-label={displayLabel}
     >
-      <span
-        className={`material-symbols-outlined text-[14px] ${state === "distributing" ? "animate-spin" : ""}`}
-      >
+      <span className={`material-symbols-outlined text-[14px] ${state === "distributing" ? "animate-spin" : ""}`}>
         {icon}
       </span>
       {displayLabel}

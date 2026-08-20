@@ -4,7 +4,6 @@ import {
   buildGeminiThoughtSignatureKey,
   storeGeminiThoughtSignature,
 } from "../../services/geminiThoughtSignatureStore.ts";
-import { caseInsensitiveToolNameLookup } from "../helpers/toolCallHelper.ts";
 import {
   parseTextualToolCallCandidate,
   containsTextualToolCallMarker,
@@ -257,7 +256,7 @@ function emitFunctionCallPart(
   results: Array<Record<string, unknown>>
 ) {
   const rawToolName = part.functionCall.name;
-  const fcName = caseInsensitiveToolNameLookup(rawToolName, state.toolNameMap) ?? rawToolName;
+  const fcName = state.toolNameMap?.get(rawToolName) || rawToolName;
   const fcArgs = normalizeToolCallArgs(part.functionCall.args || {});
   const toolCallIndex = state.functionIndex++;
   const toolCall = {

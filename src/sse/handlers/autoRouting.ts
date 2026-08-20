@@ -32,12 +32,7 @@ function classifyAutoModel(
   const recognizedBuiltInAuto =
     model === "auto" || Object.prototype.hasOwnProperty.call(AUTO_TEMPLATE_VARIANTS, model);
   if (Object.prototype.hasOwnProperty.call(AUTO_TEMPLATE_VARIANTS, model)) {
-    // auto/best-free must carry spec.tier="free" so virtualFactory applies the
-    // free-tier candidate filter (excludes paid backends). Mirrors the
-    // hardcoded spec in builtinCatalog.ts:createBuiltinAutoCombo. Without this,
-    // chat.ts routes auto/best-free as plain auto/cheap (no tier filter).
-    const spec = model === "auto/best-free" ? { tier: "free" as const } : undefined;
-    return { variant: AUTO_TEMPLATE_VARIANTS[model], spec, recognizedBuiltInAuto: true };
+    return { variant: AUTO_TEMPLATE_VARIANTS[model], recognizedBuiltInAuto: true };
   }
   if (!model.startsWith("auto/")) return { recognizedBuiltInAuto };
 

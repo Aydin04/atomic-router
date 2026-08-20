@@ -25,9 +25,7 @@ export const MODEL_MAP: Record<string, string> = {
   o3: "o3",
 };
 
-export type ChatGptThinkingEffort = "standard" | "extended" | "max";
-
-export const MODEL_FORCED_EFFORT: Record<string, ChatGptThinkingEffort> = {
+export const MODEL_FORCED_EFFORT: Record<string, "standard" | "extended"> = {
   "gpt-5-6-pro": "standard",
   "gpt-5.6-pro": "standard",
   "gpt-5-5-pro": "standard",
@@ -64,21 +62,20 @@ export function isThinkingCapableModel(modelId: string, slug: string): boolean {
   );
 }
 
-/** Map either a chatgpt.com-native value (`standard`/`extended`/`max`) or the
+/** Map either a chatgpt.com-native value (`standard`/`extended`) or the
  * OpenAI Chat Completions `reasoning_effort` field to the value the
  * `user_last_used_model_config` endpoint expects.
  *
  *   minimal | low | medium | standard  → standard
- *   high    | extended                 → extended
- *   xhigh   | max                      → max
+ *   high    | xhigh | extended         → extended
  *
- * `xhigh` remains a compatibility alias for the highest ChatGPT Web tier.
- * Returns null for absent/unknown inputs. */
-export function normalizeThinkingEffort(input: unknown): ChatGptThinkingEffort | null {
+ * `medium` collapses to `standard` because chatgpt.com only has two levels —
+ * there is no separate medium tier on the web product. Returns null for
+ * absent/unknown inputs. */
+export function normalizeThinkingEffort(input: unknown): "standard" | "extended" | null {
   if (typeof input !== "string") return null;
   const v = input.trim().toLowerCase();
-  if (v === "max" || v === "xhigh") return "max";
-  if (v === "extended" || v === "high") return "extended";
+  if (v === "extended" || v === "high" || v === "xhigh") return "extended";
   if (v === "standard" || v === "low" || v === "medium" || v === "minimal") {
     return "standard";
   }
@@ -86,14 +83,14 @@ export function normalizeThinkingEffort(input: unknown): ChatGptThinkingEffort |
 }
 
 /** Resolve the requested effort for this turn.
- * Order: `providerSpecificData.thinkingEffort` (raw override, takes native
- * `standard`/`extended`/`max` values) > `body.reasoning_effort` (top-level
- * OpenAI Chat Completions field) > `body.reasoning.effort` (Responses-API
- * nesting). Returns null when the caller did not request one. */
+ * Order: `providerSpecificData.thinkingEffort` (raw override, takes
+ * `standard`/`extended` directly) > `body.reasoning_effort` (top-level OpenAI
+ * Chat Completions field) > `body.reasoning.effort` (Responses-API nesting).
+ * Returns null when the caller did not request one. */
 export function resolveThinkingEffort(
   body: unknown,
   providerSpecificData: Record<string, unknown> | undefined
-): ChatGptThinkingEffort | null {
+): "standard" | "extended" | null {
   if (providerSpecificData && providerSpecificData.thinkingEffort !== undefined) {
     return normalizeThinkingEffort(providerSpecificData.thinkingEffort);
   }
@@ -107,7 +104,7 @@ export function resolveThinkingEffort(
 
 export interface ResolvedChatGptModel {
   slug: string;
-  effort: ChatGptThinkingEffort | null;
+  effort: "standard" | "extended" | null;
   isPro: boolean;
 }
 

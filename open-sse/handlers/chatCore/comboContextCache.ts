@@ -1,5 +1,4 @@
 import { getUpstreamProxyConfig } from "@/lib/localDb";
-import type { FallbackBackend } from "@/lib/db/upstreamProxy";
 
 /**
  * Module-level cache for upstream proxy config (shared across all requests).
@@ -9,8 +8,6 @@ type UpstreamProxyConfigCacheEntry = {
   mode: string;
   enabled: boolean;
   cliproxyapiModelMapping: Record<string, unknown> | null;
-  // #dario: retry-leg backend when mode === "fallback".
-  fallbackBackend: FallbackBackend;
   ts: number;
 };
 
@@ -70,16 +67,9 @@ export async function getUpstreamProxyConfigCached(providerId: string) {
         mode: cfg.mode,
         enabled: cfg.enabled,
         cliproxyapiModelMapping: cfg.cliproxyapiModelMapping ?? null,
-        fallbackBackend: cfg.fallbackBackend,
         ts: Date.now(),
       }
-    : {
-        mode: "native" as const,
-        enabled: false,
-        cliproxyapiModelMapping: null,
-        fallbackBackend: "cliproxyapi" as const,
-        ts: Date.now(),
-      };
+    : { mode: "native" as const, enabled: false, cliproxyapiModelMapping: null, ts: Date.now() };
   _proxyConfigCache.set(providerId, result);
   return result;
 }

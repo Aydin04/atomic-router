@@ -53,7 +53,6 @@ export const VISION_BRIDGE_SETTINGS_KEYS = [
   "visionBridgePrompt",
   "visionBridgeTimeout",
   "visionBridgeMaxImages",
-  "visionBridgeRerouteTextOnly",
 ] as const;
 
 export type VisionBridgeSettings = {
@@ -62,8 +61,6 @@ export type VisionBridgeSettings = {
   visionBridgePrompt?: string;
   visionBridgeTimeout?: number;
   visionBridgeMaxImages?: number;
-  /** Route text-only image requests to the configured VLM instead of describing them. */
-  visionBridgeRerouteTextOnly?: boolean;
 };
 
 export type VisionBridgeConfig = {

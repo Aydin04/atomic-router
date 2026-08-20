@@ -1,4 +1,5 @@
-import { describe, it, expect } from "vitest";
+import { describe, it } from "node:test";
+import assert from "node:assert/strict";
 import {
   generateRoutingHints,
   compareByCostEffectiveness,
@@ -26,8 +27,8 @@ describe("ManifestAdapter", () => {
       const hints = generateRoutingHints([], {
         messages: [{ content: "Hello" }],
       });
-      expect(hints.strategyModifier).toBe("prefer-free");
-      expect(hints.specificityLevel).toBe("trivial");
+      assert.equal(hints.strategyModifier, "prefer-free");
+      assert.equal(hints.specificityLevel, "trivial");
     });
   });
 
@@ -42,7 +43,7 @@ describe("ManifestAdapter", () => {
         ],
       });
       const validModifiers = ["prefer-free", "prefer-cheap", "require-premium", "default"];
-      expect(validModifiers.includes(hints.strategyModifier)).toBe(true);
+      assert.ok(validModifiers.includes(hints.strategyModifier));
     });
   });
 
@@ -52,15 +53,15 @@ describe("ManifestAdapter", () => {
       const hints = generateRoutingHints(targets, {
         messages: [{ content: "Hi" }],
       });
-      expect(hints.eligibleTargets.length).toBeGreaterThanOrEqual(0);
+      assert.ok(hints.eligibleTargets.length >= 0);
     });
 
     it("handles empty targets array gracefully", () => {
       const hints = generateRoutingHints([], {
         messages: [{ content: "Hello" }],
       });
-      expect(hints.eligibleTargets.length).toBe(0);
-      expect(hints.underqualifiedTargets.length).toBe(0);
+      assert.equal(hints.eligibleTargets.length, 0);
+      assert.equal(hints.underqualifiedTargets.length, 0);
     });
 
     it("classifies mixed targets for simple query", () => {
@@ -68,7 +69,7 @@ describe("ManifestAdapter", () => {
       const hints = generateRoutingHints(targets, {
         messages: [{ content: "Hello" }],
       });
-      expect(hints.eligibleTargets.length).toBeGreaterThanOrEqual(0);
+      assert.ok(hints.eligibleTargets.length >= 0);
     });
   });
 
@@ -80,7 +81,7 @@ describe("ManifestAdapter", () => {
         messages: [{ content: "Test" }],
       });
       const result = compareByCostEffectiveness(a, b, hints);
-      expect(typeof result).toBe("number");
+      assert.equal(typeof result, "number");
     });
 
     it("returns negative when a is cheaper than b", () => {
@@ -90,7 +91,7 @@ describe("ManifestAdapter", () => {
         messages: [{ content: "Test" }],
       });
       const result = compareByCostEffectiveness(a, b, hints);
-      expect(result, "deepseek should be cheaper than openai").toBeLessThan(0);
+      assert.ok(result < 0, "deepseek should be cheaper than openai");
     });
   });
 
@@ -98,19 +99,19 @@ describe("ManifestAdapter", () => {
     it("returns 0 for free providers", () => {
       const target = makeTarget("kiro", "claude-sonnet-4.5");
       const cost = estimateRequestCost(target, 1000, 500);
-      expect(cost).toBe(0);
+      assert.equal(cost, 0);
     });
 
     it("returns non-zero for premium provider", () => {
       const target = makeTarget("openai", "gpt-4o");
       const cost = estimateRequestCost(target, 1000000, 500000);
-      expect(cost, "gpt-4o should have non-zero cost").toBeGreaterThan(0);
+      assert.ok(cost > 0, "gpt-4o should have non-zero cost");
     });
 
     it("handles zero tokens", () => {
       const target = makeTarget("openai", "gpt-4o");
       const cost = estimateRequestCost(target, 0, 0);
-      expect(cost).toBe(0);
+      assert.equal(cost, 0);
     });
   });
 
@@ -119,17 +120,17 @@ describe("ManifestAdapter", () => {
       const hints = generateRoutingHints([], {
         messages: [{ content: "Hello" }],
       });
-      expect(hints.eligibleTargets.length).toBe(0);
-      expect(hints.underqualifiedTargets.length).toBe(0);
+      assert.equal(hints.eligibleTargets.length, 0);
+      assert.equal(hints.underqualifiedTargets.length, 0);
     });
 
     it("returns valid hints structure with no targets", () => {
       const hints = generateRoutingHints([], {
         messages: [{ content: "Test" }],
       });
-      expect("specificityLevel" in hints).toBe(true);
-      expect("strategyModifier" in hints).toBe(true);
-      expect("recommendedMinTier" in hints).toBe(true);
+      assert.ok("specificityLevel" in hints);
+      assert.ok("strategyModifier" in hints);
+      assert.ok("recommendedMinTier" in hints);
     });
   });
 });

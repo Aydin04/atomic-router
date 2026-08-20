@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
 
 export interface ComboCompressionModeSelectCombo {
   id: string;
@@ -17,14 +16,14 @@ export interface ComboCompressionModeSelectProps {
   onSaved?: (nextConfig: Record<string, unknown>) => void;
 }
 
-const OPTIONS = [
-  { value: "", key: "default" },
-  { value: "off", key: "off" },
-  { value: "lite", key: "lite" },
-  { value: "standard", key: "standard" },
-  { value: "aggressive", key: "aggressive" },
-  { value: "ultra", key: "ultra" },
-  { value: "codex-responses", key: "responsesToolOutput" },
+const OPTIONS: Array<{ value: string; label: string }> = [
+  { value: "", label: "Default" },
+  { value: "off", label: "Off" },
+  { value: "lite", label: "Lite" },
+  { value: "standard", label: "Standard" },
+  { value: "aggressive", label: "Aggressive" },
+  { value: "ultra", label: "Ultra" },
+  { value: "codex-responses", label: "Responses tool output" },
 ];
 
 function getInitialCompressionMode(combo: ComboCompressionModeSelectCombo): string {
@@ -39,8 +38,10 @@ function getInitialCompressionMode(combo: ComboCompressionModeSelectCombo): stri
 // and the Compression Combos page (#6760) can persist the same per-routing-combo
 // compression-mode override through the same `PUT /api/combos/{id}` endpoint.
 //
-// This component owns its option labels so the combo and compression-combo screens
-// share the same localized control without requiring page-level translation hooks.
+// Deliberately does NOT call `useTranslations` — this component is rendered from
+// CompressionCombosPageClient.tsx, which avoids page-level `useTranslations` to
+// prevent a documented production hydration regression. Callers that want localized
+// labels pass a resolved `title` string; option labels stay literal English.
 export function ComboCompressionModeSelect({
   combo,
   disabled,
@@ -48,7 +49,6 @@ export function ComboCompressionModeSelect({
   className,
   onSaved,
 }: ComboCompressionModeSelectProps) {
-  const t = useTranslations("compressionEngineConfig");
   const initialCompressionMode = getInitialCompressionMode(combo);
   const [compressionOverride, setCompressionOverride] = useState(initialCompressionMode);
   const [isSaving, setIsSaving] = useState(false);
@@ -99,7 +99,7 @@ export function ComboCompressionModeSelect({
     >
       {OPTIONS.map((option) => (
         <option key={option.value} value={option.value} className="bg-surface text-text-main">
-          {t(`modeOptions.${option.key}`)}
+          {option.label}
         </option>
       ))}
     </select>

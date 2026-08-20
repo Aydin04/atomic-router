@@ -10,7 +10,7 @@
  * literal `auto/*` string panel member already behaves via the single-
  * dispatch safety net in src/sse/handlers/chat.ts.
  */
-import { getComboModelString, normalizeComboStep } from "../../../src/lib/combos/steps.ts";
+import { normalizeComboStep } from "../../../src/lib/combos/steps.ts";
 import { executeComboRefUnit } from "./runtimeUnits.ts";
 import type {
   ComboCollectionLike,
@@ -51,11 +51,7 @@ export function extractFusionPanelSpec(
       panel.push(step.comboName);
       return;
     }
-    // Provider-wildcard steps have no concrete model to dispatch — fusion is a
-    // fixed-size panel of literal models/combo-refs, not a wildcard-expanding
-    // strategy (see file header). Skip rather than push an undefined model.
-    const modelStr = getComboModelString(step);
-    if (modelStr) panel.push(modelStr);
+    panel.push(step.model);
   });
   return { panel, comboRefUnits };
 }

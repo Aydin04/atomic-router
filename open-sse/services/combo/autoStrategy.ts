@@ -33,17 +33,11 @@ import { getTaskFitness } from "../autoCombo/taskFitness.ts";
 import {
   calculateFactors,
   calculateScore,
-  computePoolMaxima,
   type ProviderCandidate,
   type ScoringWeights,
 } from "../autoCombo/scoring.ts";
 import type { RoutingHint } from "../manifestAdapter";
 import { getCachedProviderConnections } from "../../../src/lib/db/readCache";
-import {
-  getSyncedAvailableModels,
-  getCustomModels,
-  getHiddenModelsByProvider,
-} from "../../../src/lib/db/models";
 import { getProviderModels } from "../../config/providerModels.ts";
 import {
   getConnectionRoutingTags,
@@ -357,11 +351,6 @@ export function scoreAutoTargets(
 ) {
   const targetByExecutionKey = new Map(targets.map((target) => [target.executionKey, target]));
   const activeCandidates = candidates.filter((candidate) => candidate.quotaCutoffBlocked !== true);
-  // Computed once per scoring pass, not per candidate — see computePoolMaxima's
-  // doc comment (scoring.ts) for the O(n^2) OOM this avoids on large auto-combo
-  // candidate pools (#OOM incident, zero-config auto combo expanding to 1000s
-  // of provider/model targets).
-  const poolMaxima = computePoolMaxima(activeCandidates as unknown as ProviderCandidate[]);
 
   return activeCandidates
     .map((candidate) => {
@@ -384,11 +373,10 @@ export function scoreAutoTargets(
       };
       const factors = calculateFactors(
         candidate as ProviderCandidate,
-        activeCandidates as unknown as ProviderCandidate[],
+        activeCandidates,
         taskType ?? "general",
         getTaskFitness,
-        manifestHint ?? undefined,
-        poolMaxima
+        manifestHint ?? undefined
       );
       let score = calculateScore(factors, weights);
       // B17: Quota Share soft-policy deprioritization
@@ -459,33 +447,11 @@ export async function expandAutoComboCandidatePool(
           .filter((p): p is string => typeof p === "string" && p.length > 0)
       ),
     ];
-    // Pre-build a Set of already-present modelStr values so candidate-pool
-    // expansion doesn't turn into O(n^2) per provider. See #OOM incident
-    // (zero-config auto combo expanding to 1000s of provider/model targets).
-    const seenModelStrs = new Set(eligibleTargets.map((t) => t.modelStr));
-    const hiddenModelsMap = getHiddenModelsByProvider();
     for (const providerId of providerIds) {
-      // #auto-pool-visible-only: when the operator has synced/custom models for
-      // this provider, expand ONLY those (minus hidden); fall back to the static
-      // catalog only when the user has none. This keeps catalog-only models
-      // (e.g. openrouter/auto) out of pure-auto pools when the operator only
-      // synced a subset (e.g. OpenRouter with importFreeModelsOnly).
-      const [syncedModels, customModels] = await Promise.all([
-        getSyncedAvailableModels(providerId),
-        getCustomModels(providerId),
-      ]);
-      const hiddenModels = hiddenModelsMap.get(providerId);
-      const userVisibleIds = new Set<string>();
-      for (const m of syncedModels) if (m.id && !hiddenModels?.has(m.id)) userVisibleIds.add(m.id);
-      for (const m of customModels) if (m.id && !hiddenModels?.has(m.id)) userVisibleIds.add(m.id);
-      const hasUserModels = userVisibleIds.size > 0;
-      const expandIds = hasUserModels
-        ? Array.from(userVisibleIds)
-        : getProviderModels(providerId).map((m) => m.id);
-      for (const modelId of expandIds) {
-        const modelStr = `${providerId}/${modelId}`;
-        if (!seenModelStrs.has(modelStr)) {
-          seenModelStrs.add(modelStr);
+      const providerModels = getProviderModels(providerId);
+      for (const model of providerModels) {
+        const modelStr = `${providerId}/${model.id}`;
+        if (!eligibleTargets.some((t) => t.modelStr === modelStr)) {
           eligibleTargets.push({
             kind: "model",
             stepId: modelStr,

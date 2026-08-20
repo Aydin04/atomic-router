@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { useTranslations } from "next-intl";
 import { cn } from "@/shared/utils/cn";
 
 interface APIReferenceProps {
@@ -21,7 +20,6 @@ export default function APIReference({
   returns,
   className,
 }: APIReferenceProps) {
-  const t = useTranslations("docs.apiReferenceTable");
   return (
     <div
       role="region"
@@ -40,19 +38,19 @@ export default function APIReference({
 
       {params && params.length > 0 && (
         <div className="mb-6">
-          <h4 className="text-sm font-semibold text-text-primary mb-3">{t("parameters")}</h4>
+          <h4 className="text-sm font-semibold text-text-primary mb-3">Parameters</h4>
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left border-collapse">
               <thead className="text-xs text-text-muted uppercase bg-border/50">
                 <tr>
                   <th className="px-4 py-2 border-b border-border" scope="col">
-                    {t("name")}
+                    Name
                   </th>
                   <th className="px-4 py-2 border-b border-border" scope="col">
-                    {t("type")}
+                    Type
                   </th>
                   <th className="px-4 py-2 border-b border-border" scope="col">
-                    {t("description")}
+                    Description
                   </th>
                 </tr>
               </thead>
@@ -72,9 +70,9 @@ export default function APIReference({
 
       {returns && (
         <div>
-          <h4 className="text-sm font-semibold text-text-primary mb-3">{t("returns")}</h4>
+          <h4 className="text-sm font-semibold text-text-primary mb-3">Returns</h4>
           <div className="p-3 rounded bg-bg border border-border font-mono text-sm">
-            <span className="text-text-muted">{t("typePrefix")} </span>
+            <span className="text-text-muted">Type: </span>
             <span className="text-text-main">{returns.type}</span>
             <div className="text-xs text-text-muted mt-1">{returns.description}</div>
           </div>

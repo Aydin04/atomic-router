@@ -33,8 +33,6 @@ type Page = import("playwright").Page;
 export interface BrowserPoolContextOptions {
   cookieDomain: string;
   cookieString?: string | null;
-  localStorage?: Record<string, string>;
-  localStorageOrigin?: string;
   warmupUrl?: string | null;
   userAgent?: string;
   locale?: string;
@@ -316,38 +314,6 @@ function settlePendingContext(key: string, failed: boolean): void {
   state.pendingContexts.delete(key);
 }
 
-// Seed a freshly created context with whatever session material the caller
-// supplied — cookies for cookie-auth providers, localStorage for the ones (zai-web)
-// whose session is a Bearer JWT the page reads at boot. Kept as a leaf helper so
-// the creation closure stays under the complexity ceiling.
-async function seedContextSession(
-  context: BrowserContext,
-  options: BrowserPoolContextOptions
-): Promise<void> {
-  if (options.cookieString) {
-    const cookies = parseCookieString(options.cookieString, options.cookieDomain);
-    if (cookies.length > 0) {
-      await context.addCookies(cookies);
-    }
-  }
-
-  if (!options.localStorage || Object.keys(options.localStorage).length === 0) return;
-
-  const origin = new URL(options.localStorageOrigin || options.warmupUrl || "").origin;
-  await context.addInitScript(
-    ({ expectedOrigin, entries }) => {
-      if (window.location.origin !== expectedOrigin) return;
-      for (const [name, value] of entries) {
-        window.localStorage.setItem(name, value);
-      }
-    },
-    {
-      expectedOrigin: origin,
-      entries: Object.entries(options.localStorage),
-    }
-  );
-}
-
 export async function acquireBrowserContext(
   key: string,
   options: BrowserPoolContextOptions
@@ -384,7 +350,12 @@ export async function acquireBrowserContext(
       ...(proxy ? { proxy } : {}),
     });
 
-    await seedContextSession(context, options);
+    if (options.cookieString) {
+      const cookies = parseCookieString(options.cookieString, options.cookieDomain);
+      if (cookies.length > 0) {
+        await context.addCookies(cookies);
+      }
+    }
 
     let warmupPage: Page | null = null;
     if (options.warmupUrl) {

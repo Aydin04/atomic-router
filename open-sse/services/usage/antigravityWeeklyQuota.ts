@@ -17,7 +17,6 @@
  * `fetchAntigravityUserQuotaCached` pattern.
  */
 
-import { ANTIGRAVITY_RUNTIME_BASE_URLS } from "../../config/antigravityUpstream.ts";
 import { toRecord, toNumber } from "./scalars.ts";
 import { type UsageQuota, parseResetTime } from "./quota.ts";
 import { getAntigravityContentHeaders } from "../antigravityHeaders.ts";
@@ -82,24 +81,21 @@ export async function fetchAntigravityUserQuotaSummaryCached(
 
   const promise = (async () => {
     try {
-      for (const baseUrl of ANTIGRAVITY_RUNTIME_BASE_URLS) {
-        const response = await fetch(
-          `${baseUrl}/v1internal:retrieveUserQuotaSummary`,
-          {
-            method: "POST",
-            headers: getAntigravityContentHeaders(clientProfile, accessToken),
-            body: JSON.stringify({ project: projectId }),
-            signal: AbortSignal.timeout(10000),
-          }
-        );
+      const response = await fetch(
+        "https://cloudcode-pa.googleapis.com/v1internal:retrieveUserQuotaSummary",
+        {
+          method: "POST",
+          headers: getAntigravityContentHeaders(clientProfile, accessToken),
+          body: JSON.stringify({ project: projectId }),
+          signal: AbortSignal.timeout(10000),
+        }
+      );
 
-        if (!response.ok) continue;
+      if (!response.ok) return null;
 
-        const data = await response.json();
-        _weeklyQuotaCache.set(cacheKey, { data, fetchedAt: Date.now() });
-        return data;
-      }
-      return null;
+      const data = await response.json();
+      _weeklyQuotaCache.set(cacheKey, { data, fetchedAt: Date.now() });
+      return data;
     } catch {
       return null;
     }

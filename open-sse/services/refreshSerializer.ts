@@ -112,8 +112,8 @@ export async function serializeRefresh<T>(provider: string, fn: () => Promise<T>
  * and codex-lb's replica race-detection.
  */
 export function wasRefreshTokenRotated(
-  attemptedRefreshToken: unknown,
-  latestRefreshToken: unknown
+  attemptedRefreshToken: string | null | undefined,
+  latestRefreshToken: string | null | undefined
 ): boolean {
   return (
     typeof attemptedRefreshToken === "string" &&

@@ -54,7 +54,7 @@ export function normalizeClaudeAdaptiveThinking<T extends Record<string, unknown
   delete nextThinking.budget_tokens;
   delete nextThinking.max_tokens;
 
-  return { ...body, thinking: nextThinking };
+  return { ...record, thinking: nextThinking } as T;
 }
 
 /**
@@ -84,7 +84,7 @@ export function normalizeClaudeDisabledThinkingEffort<T extends Record<string, u
   }
 
   return {
-    ...body,
+    ...record,
     output_config: { ...outputConfig, effort: disabledEffortCap },
-  };
+  } as T;
 }

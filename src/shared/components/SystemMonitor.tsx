@@ -113,13 +113,12 @@ export default function SystemMonitor({ compact = false }) {
       <div
         className="flex items-center gap-4 text-xs text-text-muted"
         role="status"
-        aria-label={t("systemMonitor.metricsAriaLabel")}
+        aria-label="System metrics"
       >
-        <span title={`${t("systemMonitor.memory")}: ${memPercent}%`}>
-          <span className={`font-mono font-medium ${memColor}`}>{memPercent}%</span>{" "}
-          {t("systemMonitor.memoryShort")}
+        <span title={`Memory: ${memPercent}%`}>
+          <span className={`font-mono font-medium ${memColor}`}>{memPercent}%</span> mem
         </span>
-        <span title={`${t("systemMonitor.uptime")}: ${formatUptime(metrics.uptime)}`}>
+        <span title={`Uptime: ${formatUptime(metrics.uptime)}`}>
           ⏱ {formatUptime(metrics.uptime)}
         </span>
       </div>
@@ -127,46 +126,33 @@ export default function SystemMonitor({ compact = false }) {
   }
 
   return (
-    <Card className="p-4" role="region" aria-label={t("systemMonitor.ariaLabel")}>
+    <Card className="p-4" role="region" aria-label="System monitoring">
       <h3 className="text-sm font-semibold text-text-main mb-3 flex items-center gap-2">
         <span className="material-symbols-outlined text-[18px] text-primary" aria-hidden="true">
           monitoring
         </span>
-        {t("systemMonitor.title")}
+        System Monitor
       </h3>
 
       <div className="space-y-0.5">
-        <MetricRow
-          icon="timer"
-          label={t("systemMonitor.uptime")}
-          value={formatUptime(metrics.uptime)}
-        />
+        <MetricRow icon="timer" label="Uptime" value={formatUptime(metrics.uptime)} />
         <MetricRow
           icon="memory"
-          label={t("systemMonitor.memory")}
+          label="Memory"
           value={`${formatBytes(memUsed)} / ${formatBytes(memTotal)} (${memPercent}%)`}
           color={memColor}
         />
         {metrics.version && (
-          <MetricRow
-            icon="info"
-            label={t("systemMonitor.version")}
-            value={metrics.version}
-            color="text-primary"
-          />
+          <MetricRow icon="info" label="Version" value={metrics.version} color="text-primary" />
         )}
         {metrics.activeConnections !== undefined && (
-          <MetricRow
-            icon="lan"
-            label={t("systemMonitor.connections")}
-            value={String(metrics.activeConnections)}
-          />
+          <MetricRow icon="lan" label="Connections" value={String(metrics.activeConnections)} />
         )}
         {metrics.circuitBreakers && (
           <MetricRow
             icon="health_and_safety"
-            label={t("systemMonitor.circuitBreakers")}
-            value={t("systemMonitor.open", { count: metrics.circuitBreakers.open || 0 })}
+            label="Circuit Breakers"
+            value={`${metrics.circuitBreakers.open || 0} open`}
             color={metrics.circuitBreakers.open > 0 ? "text-amber-400" : "text-green-400"}
           />
         )}
@@ -184,7 +170,7 @@ export default function SystemMonitor({ compact = false }) {
             aria-valuenow={memPercent}
             aria-valuemin={0}
             aria-valuemax={100}
-            aria-label={`${t("systemMonitor.memoryUsage")}: ${memPercent}%`}
+            aria-label={`Memory usage: ${memPercent}%`}
           />
         </div>
       </div>

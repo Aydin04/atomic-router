@@ -4,7 +4,6 @@ import React from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/shared/utils/cn";
-import { useTranslations } from "next-intl";
 
 interface DocsBreadcrumbsProps {
   labels: Record<string, string>;
@@ -12,7 +11,6 @@ interface DocsBreadcrumbsProps {
 }
 
 export default function DocsBreadcrumbs({ labels, className }: DocsBreadcrumbsProps) {
-  const t = useTranslations("docs");
   const pathname = usePathname();
   if (!pathname || pathname === "/") return null;
 
@@ -25,11 +23,11 @@ export default function DocsBreadcrumbs({ labels, className }: DocsBreadcrumbsPr
 
   return (
     <nav
-      aria-label={t("breadcrumb")}
+      aria-label="Breadcrumb"
       className={cn("flex items-center gap-2 text-sm text-text-muted mb-6", className)}
     >
       <Link href="/" className="hover:text-text-main transition-colors">
-        {t("docsLabel")}
+        Docs
       </Link>
       {crumbs.map((crumb, i) => (
         <React.Fragment key={crumb.href}>

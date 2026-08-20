@@ -13,11 +13,9 @@
  * derives membership from here instead of duplicating it by hand, so adding a
  * provider to a registry automatically surfaces it — no second edit, no drift.
  *
- * `imageToText` is additionally derived from `OCR_PROVIDERS` (see
- * `resolveProviderServiceKinds`): a provider registered in the OCR registry gets
- * `imageToText` for free, no manual `serviceKinds` edit needed. Kinds without any
- * backing registry (webSearch, webFetch, llm) are still declared explicitly via
- * `serviceKinds` on the provider entry; callers union declared + derived sources.
+ * Kinds without a backing registry (imageToText, webSearch, webFetch, llm) are
+ * still declared explicitly via `serviceKinds` on the provider entry; callers
+ * union the two sources.
  */
 import { AUDIO_TRANSCRIPTION_PROVIDERS, AUDIO_SPEECH_PROVIDERS } from "./audioRegistry.ts";
 import { VIDEO_PROVIDERS } from "./videoRegistry.ts";
@@ -60,8 +58,7 @@ export function getRegistryMediaKinds(providerId: string): RegistryMediaKind[] {
 
 /**
  * Full set of serviceKinds for a provider: the explicitly declared ones (llm,
- * web*, imageToText) unioned with the media kinds derived from the registries,
- * plus `imageToText` derived from the OCR registry when not already declared.
+ * web*, imageToText) unioned with the media kinds derived from the registries.
  */
 export function resolveProviderServiceKinds(
   providerId: string,
@@ -69,8 +66,5 @@ export function resolveProviderServiceKinds(
 ): string[] {
   const set = new Set<string>(declared ?? []);
   for (const kind of getRegistryMediaKinds(providerId)) set.add(kind);
-  if (Object.prototype.hasOwnProperty.call(OCR_PROVIDERS, providerId)) {
-    set.add("imageToText");
-  }
   return [...set];
 }

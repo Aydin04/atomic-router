@@ -1,5 +1,4 @@
 import { HTTP_STATUS } from "../config/constants.ts";
-import { buildErrorBody, sanitizeErrorMessage } from "./error.ts";
 
 type StreamReadinessLogger = {
   debug?: (tag: string, message: string) => void;
@@ -8,18 +7,7 @@ type StreamReadinessLogger = {
 
 export type StreamReadinessResult =
   | { ok: true; response: Response }
-  | {
-      ok: false;
-      response: Response;
-      /** Sanitized operator-facing context for logs and persisted diagnostics. */
-      reason: string;
-      /** Stable internal text for retry, quota, and account-health classification. */
-      classificationReason: string;
-      /** First non-empty sanitized message from an error-only SSE payload. */
-      upstreamDiagnostic?: string;
-      code: string;
-      type: string;
-    };
+  | { ok: false; response: Response; reason: string; code: string; type: string };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value);
@@ -245,7 +233,6 @@ type StreamReadinessSignalState = {
   currentEvent: string;
   dataLines: string[];
   pendingLine: string;
-  upstreamDiagnostic: string | null;
 };
 
 function resetCurrentEvent(state: StreamReadinessSignalState): void {
@@ -261,23 +248,7 @@ function processStreamReadinessEvent(state: StreamReadinessSignalState): boolean
   if (isPingEventType(eventType) || !data || data === "[DONE]") return false;
 
   try {
-    const payload: unknown = JSON.parse(data);
-    if (
-      !state.upstreamDiagnostic &&
-      isRecord(payload) &&
-      isErrorOnlyStructuredPayload(payload)
-    ) {
-      const error = payload.error;
-      const rawMessage =
-        typeof error === "string"
-          ? error
-          : isRecord(error) && typeof error.message === "string"
-            ? error.message
-            : "";
-      const diagnostic = sanitizeErrorMessage(rawMessage).trim();
-      if (diagnostic) state.upstreamDiagnostic = diagnostic;
-    }
-    return hasNonPingStructuredPayload(payload, eventType);
+    return hasNonPingStructuredPayload(JSON.parse(data), eventType);
   } catch {
     return data.length > 0;
   }
@@ -323,7 +294,6 @@ export function hasStreamReadinessSignal(text: string): boolean {
     currentEvent: "",
     dataLines: [],
     pendingLine: "",
-    upstreamDiagnostic: null,
   };
   if (appendStreamReadinessSignal(state, text)) return true;
   return finishStreamReadinessSignal(state);
@@ -333,18 +303,16 @@ function createErrorResponse(
   status: number,
   message: string,
   code: string,
-  type: string,
-  upstreamDiagnostic?: string
+  type: string
 ): Response {
   return new Response(
-    JSON.stringify(
-      buildErrorBody(
-        status,
+    JSON.stringify({
+      error: {
         message,
-        upstreamDiagnostic ? { error: { message: upstreamDiagnostic } } : undefined,
-        { code, type }
-      )
-    ),
+        type,
+        code,
+      },
+    }),
     { status, headers: { "Content-Type": "application/json" } }
   );
 }
@@ -417,7 +385,6 @@ export async function ensureStreamReadiness(
     currentEvent: "",
     dataLines: [],
     pendingLine: "",
-    upstreamDiagnostic: null,
   };
   const startedAt = Date.now();
   const effectiveTimeoutMs = Math.max(0, Math.floor(options.timeoutMs));
@@ -447,7 +414,6 @@ export async function ensureStreamReadiness(
         return {
           ok: false,
           reason,
-          classificationReason: reason,
           code: "STREAM_READINESS_TIMEOUT",
           type: "stream_timeout",
           response: createErrorResponse(
@@ -472,7 +438,6 @@ export async function ensureStreamReadiness(
         return {
           ok: false,
           reason,
-          classificationReason: reason,
           code: "STREAM_READINESS_TIMEOUT",
           type: "stream_timeout",
           response: createErrorResponse(
@@ -495,11 +460,7 @@ export async function ensureStreamReadiness(
           return { ok: true, response: buildReadyResponse() };
         }
 
-        const classificationReason = "Stream ended before producing a non-ping SSE event";
-        const upstreamDiagnostic = readinessState.upstreamDiagnostic || undefined;
-        const reason = upstreamDiagnostic
-          ? `${classificationReason}: ${upstreamDiagnostic}`
-          : classificationReason;
+        const reason = "Stream ended before producing a non-ping SSE event";
         options.log?.warn?.(
           "STREAM",
           `${reason} (${options.provider || "provider"}/${options.model || "unknown"})`
@@ -507,16 +468,13 @@ export async function ensureStreamReadiness(
         return {
           ok: false,
           reason,
-          classificationReason,
-          ...(upstreamDiagnostic ? { upstreamDiagnostic } : {}),
           code: "STREAM_EARLY_EOF",
           type: "stream_early_eof",
           response: createErrorResponse(
             HTTP_STATUS.BAD_GATEWAY,
-            classificationReason,
+            reason,
             "STREAM_EARLY_EOF",
-            "stream_early_eof",
-            upstreamDiagnostic
+            "stream_early_eof"
           ),
         };
       }

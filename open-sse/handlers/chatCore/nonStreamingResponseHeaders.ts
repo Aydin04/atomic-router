@@ -16,9 +16,9 @@ export function buildNonStreamingResponseHeaders(
     provider: string | null | undefined;
     model: string | null | undefined;
     startTime: number;
-    responseUsage: Record<string, unknown> | null | undefined;
+    responseUsage: unknown;
     estimatedCost: number;
-    requestId: string | null | undefined;
+    requestId: unknown;
     compressionResponseMeta?: string | null | undefined;
     comboStrategy?: string | null | undefined;
   },

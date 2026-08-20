@@ -1,7 +1,12 @@
 import type { RegistryEntry, RegistryModel } from "./providers/shared.ts";
 
 export type ProviderPluginCapability =
-  "apikey" | "custom-executor" | "oauth" | "passthrough-models" | "responses" | "sidecar-candidate";
+  | "apikey"
+  | "custom-executor"
+  | "oauth"
+  | "passthrough-models"
+  | "responses"
+  | "sidecar-candidate";
 
 export interface ProviderPluginModel {
   id: string;
@@ -11,7 +16,6 @@ export interface ProviderPluginModel {
   toolCalling?: boolean;
   supportsReasoning?: boolean;
   supportsVision?: boolean;
-  supportsVideo?: boolean;
   unsupportedParams?: readonly string[];
   targetFormat?: string;
 }
@@ -54,7 +58,7 @@ const SIDECAR_COMPATIBLE_EXECUTORS = new Set(["default"]);
 
 function compactObject<T extends Record<string, unknown>>(value: T): Partial<T> {
   return Object.fromEntries(
-    Object.entries(value).filter(([, entryValue]) => entryValue !== undefined)
+    Object.entries(value).filter(([, entryValue]) => entryValue !== undefined),
   ) as Partial<T>;
 }
 
@@ -67,7 +71,6 @@ function mapModel(model: RegistryModel): ProviderPluginModel {
     toolCalling: model.toolCalling,
     supportsReasoning: model.supportsReasoning,
     supportsVision: model.supportsVision,
-    supportsVideo: model.supportsVideo,
     unsupportedParams: model.unsupportedParams,
     targetFormat: model.targetFormat,
   }) as ProviderPluginModel;
@@ -127,7 +130,7 @@ function capabilitiesFor(entry: RegistryEntry, eligible: boolean): ProviderPlugi
 }
 
 export function createProviderPluginManifestEntry(
-  entry: RegistryEntry
+  entry: RegistryEntry,
 ): ProviderPluginManifestEntry {
   const sidecar = sidecarEligibility(entry);
 
@@ -160,7 +163,7 @@ export function createProviderPluginManifestEntry(
 }
 
 export function generateProviderPluginManifestFromRegistry(
-  registry: Record<string, RegistryEntry>
+  registry: Record<string, RegistryEntry>,
 ): ProviderPluginManifest {
   return {
     schemaVersion: 1,
@@ -188,7 +191,7 @@ export function createServiceBackendManifestEntry(
   template: Pick<
     ProviderPluginManifestEntry,
     "format" | "executor" | "auth" | "endpoints" | "capabilities" | "passthroughModels" | "sidecar"
-  >
+  >,
 ): ProviderPluginManifestEntry {
   return {
     id: pluginId,
@@ -199,10 +202,11 @@ export function createServiceBackendManifestEntry(
 
 export function getProviderPluginManifestEntryFromRegistry(
   registry: Record<string, RegistryEntry>,
-  provider: string
+  provider: string,
 ): ProviderPluginManifestEntry | null {
   const entry =
-    registry[provider] || Object.values(registry).find((candidate) => candidate.alias === provider);
+    registry[provider] ||
+    Object.values(registry).find((candidate) => candidate.alias === provider);
 
   return entry ? createProviderPluginManifestEntry(entry) : null;
 }

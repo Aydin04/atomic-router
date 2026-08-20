@@ -30,7 +30,6 @@ export interface SearchProviderConfig {
    * credentialed provider is available, or when requested explicitly by id.
    */
   fallbackOnly?: boolean;
-  disabled?: boolean;
 }
 
 export const SEARCH_PROVIDERS: Record<string, SearchProviderConfig> = {
@@ -208,7 +207,6 @@ export const SEARCH_PROVIDERS: Record<string, SearchProviderConfig> = {
     maxMaxResults: 50,
     timeoutMs: 10_000,
     cacheTTLMs: 3 * 60 * 1000,
-    fallbackOnly: true,
   },
 
   "ollama-search": {

@@ -10,10 +10,13 @@
  */
 
 type LoggerLike =
-  { info?: (...args: unknown[]) => void; debug?: (...args: unknown[]) => void } | null | undefined;
+  | { info?: (...args: unknown[]) => void; debug?: (...args: unknown[]) => void }
+  | null
+  | undefined;
 
 export type PluginOnRequestGate =
-  { blocked: true; response: Response } | { blocked: false; body?: unknown };
+  | { blocked: true; response: Response }
+  | { blocked: false; body?: unknown };
 
 const JSON_HEADERS = { status: 403, headers: { "Content-Type": "application/json" } } as const;
 
@@ -23,7 +26,6 @@ export async function runPluginOnRequestHook(args: {
   model: string | null | undefined;
   provider: string | null | undefined;
   apiKeyInfo: unknown;
-  headers?: Record<string, string | string[] | undefined>;
   log?: LoggerLike;
 }): Promise<PluginOnRequestGate> {
   try {
@@ -34,7 +36,6 @@ export async function runPluginOnRequestHook(args: {
       model: args.model,
       provider: args.provider,
       apiKeyInfo: args.apiKeyInfo,
-      headers: args.headers,
       metadata: {},
     };
     const pluginResult = await runOnRequest(pluginCtx);

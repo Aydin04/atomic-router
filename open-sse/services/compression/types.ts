@@ -157,12 +157,6 @@ export interface LiveZoneConfig {
   enabled: boolean;
 }
 
-/** Lite detail settings for proactive request-time transformations. */
-export interface LiteConfig {
-  /** Truncate tool-result strings over 2,000 characters before provider dispatch. */
-  compressToolResults: boolean;
-}
-
 export interface CompressionPipelineStep {
   engine: CompressionEngineId;
   intensity?: CavemanIntensity | RtkIntensity;
@@ -224,8 +218,6 @@ export interface CompressionConfig {
   languageConfig?: CompressionLanguageConfig;
   aggressive?: AggressiveConfig;
   ultra?: UltraConfig;
-  /** Lite proactive transformation detail settings. */
-  lite?: LiteConfig;
   /** Headroom SmartCrusher detail settings (minRows gate). */
   headroom?: HeadroomConfig;
   /** Session Dedup detail settings (minBlockChars / fuzzy, #8388). */
@@ -403,7 +395,6 @@ export const DEFAULT_COMPRESSION_CONFIG: CompressionConfig = {
   ultraEngine: "heuristic",
   ultraSlmPrewarm: false,
   liveZone: { enabled: false },
-  lite: { compressToolResults: true },
   codexResponsesConfig: { ...DEFAULT_CODEX_RESPONSES_CONFIG },
 };
 

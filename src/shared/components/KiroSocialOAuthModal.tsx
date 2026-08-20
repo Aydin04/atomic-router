@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useTranslations } from "next-intl";
 import Modal from "./Modal";
 import Button from "./Button";
 import { copyToClipboard } from "@/shared/utils/clipboard";
@@ -24,7 +23,6 @@ export default function KiroSocialOAuthModal({
   onSuccess,
   onClose,
 }: KiroSocialOAuthModalProps) {
-  const t = useTranslations("kiroSocialOAuthModal");
   const [step, setStep] = useState<"loading" | "polling" | "success" | "error">("loading");
   const [error, setError] = useState<string | null>(null);
   const [userCode, setUserCode] = useState("");
@@ -62,7 +60,7 @@ export default function KiroSocialOAuthModal({
         if (cancelled) return;
 
         if (!res.ok) {
-          throw new Error(data.error || t("errorStartAuthorization"));
+          throw new Error(data.error || "Failed to start authorization");
         }
 
         setUserCode(data.userCode || "");
@@ -82,7 +80,7 @@ export default function KiroSocialOAuthModal({
           pollRef.current = null;
           if (cancelled) return;
           if (Date.now() >= expiresAt) {
-            fail(t("errorAuthorizationExpired"));
+            fail("Authorization expired. Start the login flow again.");
             return;
           }
 
@@ -103,7 +101,7 @@ export default function KiroSocialOAuthModal({
             }
 
             if (!pollData.pending) {
-              fail(pollData.error || t("errorAuthorizationFailed"));
+              fail(pollData.error || "Authorization failed");
               return;
             }
 
@@ -126,7 +124,7 @@ export default function KiroSocialOAuthModal({
       cancelled = true;
       stopPolling();
     };
-  }, [isOpen, provider, targetProvider, t]);
+  }, [isOpen, provider, targetProvider]);
 
   const handleClose = () => {
     if (pollRef.current) {
@@ -141,7 +139,7 @@ export default function KiroSocialOAuthModal({
   return (
     <Modal
       isOpen={isOpen}
-      title={t("title", { providerLabel, providerName })}
+      title={`Connect ${providerLabel} via ${providerName}`}
       onClose={handleClose}
       size="lg"
     >
@@ -153,8 +151,8 @@ export default function KiroSocialOAuthModal({
                 progress_activity
               </span>
             </div>
-            <h3 className="text-lg font-semibold mb-2">{t("initializing")}</h3>
-            <p className="text-sm text-text-muted">{t("settingUp", { providerName })}</p>
+            <h3 className="text-lg font-semibold mb-2">Initializing...</h3>
+            <p className="text-sm text-text-muted">Setting up {providerName} authentication</p>
           </div>
         )}
 
@@ -165,8 +163,10 @@ export default function KiroSocialOAuthModal({
                 open_in_browser
               </span>
             </div>
-            <h3 className="text-lg font-semibold mb-2">{t("openIncognito")}</h3>
-            <p className="text-sm text-text-muted mb-3">{t("incognitoDescription")}</p>
+            <h3 className="text-lg font-semibold mb-2">Open this link in an Incognito window</h3>
+            <p className="text-sm text-text-muted mb-3">
+              Use an Incognito/Private window to avoid session conflicts with existing accounts.
+            </p>
             {authUrl && (
               <div className="mb-4">
                 <div className="flex items-center gap-2 justify-center">
@@ -181,7 +181,7 @@ export default function KiroSocialOAuthModal({
                   <button
                     onClick={() => copyToClipboard(authUrl)}
                     className="shrink-0 p-1 rounded hover:bg-sidebar"
-                    title={t("copyLink")}
+                    title="Copy link"
                   >
                     <span className="material-symbols-outlined text-base">content_copy</span>
                   </button>
@@ -190,7 +190,7 @@ export default function KiroSocialOAuthModal({
             )}
             {userCode && (
               <div className="mb-4">
-                <p className="text-xs text-text-muted mb-1">{t("verificationCode")}</p>
+                <p className="text-xs text-text-muted mb-1">Verification code</p>
                 <p className="font-mono text-2xl font-bold tracking-widest">{userCode}</p>
               </div>
             )}
@@ -198,11 +198,11 @@ export default function KiroSocialOAuthModal({
               <span className="material-symbols-outlined text-base animate-spin">
                 progress_activity
               </span>
-              {t("waiting")}
+              Waiting for authorization...
             </div>
             <div className="mt-6">
               <Button onClick={handleClose} variant="ghost" fullWidth>
-                {t("cancel")}
+                Cancel
               </Button>
             </div>
           </div>
@@ -215,12 +215,12 @@ export default function KiroSocialOAuthModal({
                 check_circle
               </span>
             </div>
-            <h3 className="text-lg font-semibold mb-2">{t("successTitle")}</h3>
+            <h3 className="text-lg font-semibold mb-2">Connected Successfully!</h3>
             <p className="text-sm text-text-muted mb-4">
-              {t("successMessage", { providerLabel, providerName })}
+              Your {providerLabel} account via {providerName} has been connected.
             </p>
             <Button onClick={handleClose} fullWidth>
-              {t("done")}
+              Done
             </Button>
           </div>
         )}
@@ -230,11 +230,11 @@ export default function KiroSocialOAuthModal({
             <div className="size-16 mx-auto mb-4 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
               <span className="material-symbols-outlined text-3xl text-red-600">error</span>
             </div>
-            <h3 className="text-lg font-semibold mb-2">{t("errorTitle")}</h3>
+            <h3 className="text-lg font-semibold mb-2">Connection Failed</h3>
             <p className="text-sm text-red-600 mb-4">{error}</p>
             <div className="flex gap-2">
               <Button onClick={handleClose} variant="ghost" fullWidth>
-                {t("close")}
+                Close
               </Button>
             </div>
           </div>

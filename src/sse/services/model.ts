@@ -8,17 +8,15 @@ import {
   getCustomModels,
 } from "@/lib/localDb";
 import { getCachedSettings } from "@/lib/localDb";
-import { getActiveSyncedCatalog } from "@/lib/db/models/activeSyncedCatalog";
+import { getSyncedAvailableModels } from "@/lib/db/models";
 import {
   parseModel,
   getModelInfoCore,
   splitSyncedEffortSuffix,
-  stripContextWindowSuffix,
 } from "@omniroute/open-sse/services/model.ts";
 import { REGISTRY } from "@omniroute/open-sse/config/providerRegistry.ts";
-import { getRegisteredProviderEffortBaseModelId } from "@omniroute/open-sse/utils/registeredEffortVariants.ts";
 
-export { parseModel, stripContextWindowSuffix };
+export { parseModel };
 
 /**
  * Reserved provider prefixes — built-in provider ids + aliases. User-defined
@@ -123,37 +121,6 @@ function isSyncedEffortSkippedProvider(providerId: string): boolean {
   return SYNCED_EFFORT_SKIP_PROVIDER_PREFIXES.some((prefix) => providerId.startsWith(prefix));
 }
 
-/** Resolve a suffix against an explicitly tiered static registry model. */
-function resolveRegistryModelIdAndEffort(
-  providerId: string,
-  modelId: string
-): { modelId: string; effort: string | null } {
-  if (isSyncedEffortSkippedProvider(providerId)) return { modelId, effort: null };
-
-  const registryModels = REGISTRY[providerId]?.models;
-  if (!Array.isArray(registryModels)) return { modelId, effort: null };
-  if (registryModels.some((candidate) => candidate?.id === modelId)) {
-    return { modelId, effort: null };
-  }
-
-  for (const candidate of registryModels) {
-    if (!Array.isArray(candidate?.supportedThinkingEfforts)) continue;
-    const attempt = splitSyncedEffortSuffix(modelId, candidate.supportedThinkingEfforts);
-    if (attempt.effort && attempt.baseModel === candidate.id) {
-      return { modelId: attempt.baseModel, effort: attempt.effort };
-    }
-  }
-
-  return { modelId, effort: null };
-}
-
-function findRegistryModel(providerId: string, modelId: string): any {
-  const registryModels = REGISTRY[providerId]?.models;
-  return Array.isArray(registryModels)
-    ? registryModels.find((candidate) => candidate?.id === modelId)
-    : undefined;
-}
-
 /**
  * #7694: when `modelId` has no direct synced-model match, try stripping a trailing
  * `-{effort}` token by testing it against each candidate synced model's OWN declared
@@ -173,10 +140,7 @@ function resolveSyncedModelIdAndEffort(
   }
   if (findSyncedModelMeta(syncedModels, modelId)) return { modelId, effort: null };
 
-  for (const candidate of syncedModels as Array<{
-    id?: unknown;
-    supportedThinkingEfforts?: unknown;
-  }>) {
+  for (const candidate of syncedModels as Array<{ id?: unknown; supportedThinkingEfforts?: unknown }>) {
     if (typeof candidate?.id !== "string" || !Array.isArray(candidate.supportedThinkingEfforts)) {
       continue;
     }
@@ -225,11 +189,7 @@ function copySyncedThinkingMetadata(metadata: RuntimeModelMeta, syncedMatch: any
     metadata.supportsThinking = syncedMatch.supportsThinking;
   }
   if (syncedMatch?.alwaysThinking === true) metadata.alwaysThinking = true;
-  // Only let a non-empty synced effort list override the static registry fallback;
-  // an empty array from an incomplete synced discovery must not erase registry-declared
-  // tiers (#9485 review).
-  if (Array.isArray(syncedMatch?.supportedThinkingEfforts) &&
-    syncedMatch.supportedThinkingEfforts.length > 0) {
+  if (Array.isArray(syncedMatch?.supportedThinkingEfforts)) {
     metadata.supportedThinkingEfforts = syncedMatch.supportedThinkingEfforts;
   }
   if (typeof syncedMatch?.defaultThinkingEffort === "string") {
@@ -237,22 +197,8 @@ function copySyncedThinkingMetadata(metadata: RuntimeModelMeta, syncedMatch: any
   }
 }
 
-function copyRegistryThinkingMetadata(metadata: RuntimeModelMeta, registryMatch: any): void {
-  if (typeof registryMatch?.supportsReasoning === "boolean") {
-    metadata.supportsThinking = registryMatch.supportsReasoning;
-  }
-  if (Array.isArray(registryMatch?.supportedThinkingEfforts)) {
-    metadata.supportedThinkingEfforts = [...registryMatch.supportedThinkingEfforts];
-  }
-}
-
-function buildRuntimeModelMeta(
-  customMatch: any,
-  syncedMatch: any,
-  registryMatch: any
-): RuntimeModelMeta {
+function buildRuntimeModelMeta(customMatch: any, syncedMatch: any): RuntimeModelMeta {
   const metadata = resolveRuntimeFormats(customMatch, syncedMatch);
-  copyRegistryThinkingMetadata(metadata, registryMatch);
   copySyncedThinkingMetadata(metadata, syncedMatch);
   return metadata;
 }
@@ -260,62 +206,29 @@ function buildRuntimeModelMeta(
 async function lookupModelMeta(
   providerId: string,
   modelId: string
-): Promise<{
-  modelId: string;
-  metadata: RuntimeModelMeta;
-  available: boolean;
-}> {
+): Promise<{ modelId: string; metadata: RuntimeModelMeta }> {
   try {
-    const [customModels, liveCatalog] = await Promise.all([
+    const [customModels, syncedModels] = await Promise.all([
       getCustomModels(providerId),
-      getActiveSyncedCatalog(providerId),
+      getSyncedAvailableModels(providerId),
     ]);
-    const syncedModels = liveCatalog.models;
-
     // #7694: no direct match on the raw modelId? try a synced-declared `-{effort}`
     // suffix before falling back to the literal id, so `<prefix>/<model>-<tier>`
     // resolves to the real base model + a resolved effort.
-    // #7694: no direct match on the raw modelId? try a synced-declared `-{effort}`
-    // suffix before falling back to the literal id, so `<prefix>/<model>-<tier>`
-    // resolves to the real base model + a resolved effort.
-    let { modelId: resolvedModelId, effort } = resolveSyncedModelIdAndEffort(
+    const { modelId: resolvedModelId, effort } = resolveSyncedModelIdAndEffort(
       providerId,
       modelId,
       syncedModels
     );
-    // Short-circuit registry suffix resolution when the raw id is already a direct
-    // custom or synced model — otherwise a model literally named
-    // `deepseek-v4-flash-low` gets rewritten to `deepseek-v4-flash` + effort `low`
-    // and its custom/synced metadata (apiFormat/targetFormat) is dropped (#9485 review).
-    if (
-      !effort &&
-      resolvedModelId === modelId &&
-      !findCustomModelMeta(customModels, modelId) &&
-      !findSyncedModelMeta(syncedModels, modelId)
-    ) {
-      const registryResolution = resolveRegistryModelIdAndEffort(providerId, modelId);
-      resolvedModelId = registryResolution.modelId;
-      effort = registryResolution.effort;
-    }
-    // Custom models remain explicit operator overrides even when live discovery
-    // is authoritative for the provider.
+    // #7364: exact match first; retain the case-insensitive custom-model fallback
+    // while also consulting the API-synced catalog for Kimi runtime metadata.
     const customMatch = findCustomModelMeta(customModels, resolvedModelId);
     const syncedMatch = findSyncedModelMeta(syncedModels, resolvedModelId);
-    const registryMatch = findRegistryModel(providerId, resolvedModelId);
-    const effortBaseModelId = getRegisteredProviderEffortBaseModelId(providerId, modelId);
-
-    const liveBackedEffortVariant =
-      effortBaseModelId !== null && syncedModels.some((model) => model.id === effortBaseModelId);
-
-    const available =
-      !liveCatalog.authoritative || Boolean(customMatch || syncedMatch || liveBackedEffortVariant);
-
-    const metadata = buildRuntimeModelMeta(customMatch, syncedMatch, registryMatch);
+    const metadata = buildRuntimeModelMeta(customMatch, syncedMatch);
     if (effort) metadata.resolvedThinkingEffort = effort;
-
-    return { modelId: resolvedModelId, metadata, available };
+    return { modelId: resolvedModelId, metadata };
   } catch {
-    return { modelId, metadata: {}, available: true };
+    return { modelId, metadata: {} };
   }
 }
 
@@ -344,23 +257,8 @@ export async function getModelInfo(modelStr) {
 
   const attachRuntimeModelMeta = async (info: any) => {
     if (!info?.provider || !info?.model) return info;
-
-    const providerId = String(info.provider);
-    const requestedModelId = String(info.model);
-    const { modelId, metadata, available } = await lookupModelMeta(providerId, requestedModelId);
-
-    if (!available) {
-      return {
-        provider: null,
-        model: requestedModelId,
-        extendedContext: info.extendedContext,
-        errorType: "model_not_found",
-        errorMessage: `Model '${requestedModelId}' is not available in the active live catalog for provider '${providerId}'.`,
-      };
-    }
-
+    const { modelId, metadata } = await lookupModelMeta(String(info.provider), String(info.model));
     const resolvedInfo = modelId !== info.model ? { ...info, model: modelId } : info;
-
     return Object.keys(metadata).length > 0 ? { ...resolvedInfo, ...metadata } : resolvedInfo;
   };
 
@@ -455,7 +353,7 @@ export async function getModelInfo(modelStr) {
 export async function getCombo(modelStr) {
   // Try exact match first (supports combos actually named "combo/ANY")
   let combo = await getComboByName(modelStr);
-  if (combo && Array.isArray(combo.models) && combo.models.length > 0) {
+  if (combo && combo.models && combo.models.length > 0) {
     return combo;
   }
 
@@ -463,7 +361,7 @@ export async function getCombo(modelStr) {
   if (modelStr.startsWith("combo/")) {
     const nameToSearch = modelStr.substring(6);
     combo = await getComboByName(nameToSearch);
-    if (combo && Array.isArray(combo.models) && combo.models.length > 0) {
+    if (combo && combo.models && combo.models.length > 0) {
       return combo;
     }
   }
@@ -475,12 +373,12 @@ export async function getCombo(modelStr) {
   // a combo named "MASTER-LIGHT"). These two fallbacks only run after the exact
   // match fails, so they never re-route a combo that already resolves today.
   combo = await getComboById(modelStr);
-  if (combo && Array.isArray(combo.models) && combo.models.length > 0) {
+  if (combo && combo.models && combo.models.length > 0) {
     return combo;
   }
 
   combo = await getComboByNameInsensitive(modelStr);
-  if (combo && Array.isArray(combo.models) && combo.models.length > 0) {
+  if (combo && combo.models && combo.models.length > 0) {
     return combo;
   }
 
@@ -498,21 +396,13 @@ export async function getCombo(modelStr) {
  */
 export async function getComboForModel(modelStr) {
   // 1. Existing behavior — exact combo name match
-  let combo = await getCombo(modelStr);
+  const combo = await getCombo(modelStr);
   if (combo) return combo;
-
-  // Client context tags are ignored only after exact lookup, preserving literal
-  // combo names such as "Claude [1m]" while allowing "Claude[500k]" to use "Claude".
-  const baseModelStr = stripContextWindowSuffix(modelStr);
-  if (baseModelStr && baseModelStr !== modelStr) {
-    combo = await getCombo(baseModelStr);
-    if (combo) return combo;
-  }
 
   // 2. NEW — check model-combo mappings table (pattern match)
   try {
     const { resolveComboForModel } = await import("@/lib/localDb");
-    const mapped = await resolveComboForModel(baseModelStr || modelStr);
+    const mapped = await resolveComboForModel(modelStr);
     if (mapped && (mapped as any).models?.length > 0) {
       return mapped;
     }

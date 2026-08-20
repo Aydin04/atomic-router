@@ -1,4 +1,4 @@
-import { applyEdits, modify, parse, printParseErrorCode, type ParseError } from "jsonc-parser";
+import { applyEdits, modify, parse } from "jsonc-parser";
 
 type OpenCodeConfigInput = {
   baseUrl?: string;
@@ -113,16 +113,11 @@ export const mergeOpenCodeConfigText = (
     return JSON.stringify(buildOpenCodeConfigDocument(input), null, 2);
   }
 
-  const errors: ParseError[] = [];
+  const errors: { error: number }[] = [];
   const parsed = parse(content, errors, { allowTrailingComma: true, disallowComments: false });
 
   if (errors.length > 0 || !parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-    const detail = errors[0]
-      ? `${printParseErrorCode(errors[0].error)} at offset ${errors[0].offset}`
-      : "root must be an object";
-    throw new Error(
-      `Existing OpenCode config is invalid JSONC (${detail}); refusing to overwrite it.`
-    );
+    return JSON.stringify(mergeOpenCodeConfig({}, input), null, 2);
   }
 
   let nextText = content;

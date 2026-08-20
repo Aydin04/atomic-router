@@ -202,15 +202,15 @@ export default function UsageStats() {
 
   // Time format for "Last Used"
   const fmtTime = (iso: string) => {
-    if (!iso) return t("never");
+    if (!iso) return "Never";
     const date = new Date(iso);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
 
-    if (diffMins < 1) return t("justNow");
-    if (diffMins < 60) return t("minutesAgo", { count: diffMins });
-    if (diffMins < 1440) return t("hoursAgo", { count: Math.floor(diffMins / 60) });
+    if (diffMins < 1) return "Just now";
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
     return date.toLocaleDateString();
   };
 
@@ -230,7 +230,7 @@ export default function UsageStats() {
                   : "text-text-muted hover:text-text hover:bg-bg-hover"
               }`}
             >
-              {t("tokens")}
+              Tokens
             </button>
             <button
               onClick={() => setViewMode("costs")}
@@ -240,19 +240,19 @@ export default function UsageStats() {
                   : "text-text-muted hover:text-text hover:bg-bg-hover"
               }`}
             >
-              {t("costs")}
+              Costs
             </button>
           </div>
 
           {/* Auto Refresh Toggle */}
           <div className="text-sm font-medium text-text-muted flex items-center gap-2">
-            <span>{t("autoRefresh", { seconds: refreshInterval / 1000 })}</span>
+            <span>Auto Refresh ({refreshInterval / 1000}s)</span>
             <button
               type="button"
               onClick={() => setAutoRefresh(!autoRefresh)}
               role="switch"
               aria-checked={autoRefresh}
-              aria-label={t("toggleAutoRefresh")}
+              aria-label="Toggle auto refresh"
               className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 ${
                 autoRefresh ? "bg-primary" : "bg-bg-subtle border border-border"
               }`}
@@ -276,7 +276,7 @@ export default function UsageStats() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
               </span>
-              {t("activeRequests")}
+              Active Requests
             </div>
             <div className="flex flex-wrap gap-3">
               {stats.activeRequests.map((req) => (
@@ -307,7 +307,7 @@ export default function UsageStats() {
           <div className="flex justify-between items-start">
             <div className="flex flex-col gap-1">
               <span className="text-text-muted text-sm uppercase font-semibold">
-                {t("totalRequests")}
+                Total Requests
               </span>
               <span className="text-2xl font-bold">{fmt(stats.totalRequests)}</span>
             </div>
@@ -321,7 +321,7 @@ export default function UsageStats() {
           <div className="flex justify-between items-start">
             <div className="flex flex-col gap-1">
               <span className="text-text-muted text-sm uppercase font-semibold">
-                {t("totalInputTokens")}
+                Total Input Tokens
               </span>
               <span className="text-2xl font-bold text-primary">
                 {fmt(stats.totalPromptTokens)}
@@ -357,7 +357,7 @@ export default function UsageStats() {
       {/* {t("usageByModel")} Table */}
       <Card className="overflow-hidden">
         <div className="p-4 border-b border-border bg-bg-subtle/50">
-          <h3 className="font-semibold">{t("usageByModel")}</h3>
+          <h3 className="font-semibold">Usage by Model</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
@@ -367,28 +367,27 @@ export default function UsageStats() {
                   className="px-6 py-3 cursor-pointer hover:bg-bg-subtle/50"
                   onClick={() => toggleSort("rawModel")}
                 >
-                  {t("model")}{" "}
-                  <SortIcon field="rawModel" currentSort={sortBy} currentOrder={sortOrder} />
+                  Model <SortIcon field="rawModel" currentSort={sortBy} currentOrder={sortOrder} />
                 </th>
                 <th
                   className="px-6 py-3 cursor-pointer hover:bg-bg-subtle/50"
                   onClick={() => toggleSort("provider")}
                 >
-                  {t("provider")}{" "}
+                  Provider{" "}
                   <SortIcon field="provider" currentSort={sortBy} currentOrder={sortOrder} />
                 </th>
                 <th
                   className="px-6 py-3 text-right cursor-pointer hover:bg-bg-subtle/50"
                   onClick={() => toggleSort("requests")}
                 >
-                  {t("requests")}{" "}
+                  Requests{" "}
                   <SortIcon field="requests" currentSort={sortBy} currentOrder={sortOrder} />
                 </th>
                 <th
                   className="px-6 py-3 text-right cursor-pointer hover:bg-bg-subtle/50"
                   onClick={() => toggleSort("lastUsed")}
                 >
-                  {t("lastUsed")}{" "}
+                  Last Used{" "}
                   <SortIcon field="lastUsed" currentSort={sortBy} currentOrder={sortOrder} />
                 </th>
                 {viewMode === "tokens" ? (
@@ -397,7 +396,7 @@ export default function UsageStats() {
                       className="px-6 py-3 text-right cursor-pointer hover:bg-bg-subtle/50"
                       onClick={() => toggleSort("promptTokens")}
                     >
-                      {t("inputTokens")}{" "}
+                      Input Tokens{" "}
                       <SortIcon
                         field="promptTokens"
                         currentSort={sortBy}
@@ -408,7 +407,7 @@ export default function UsageStats() {
                       className="px-6 py-3 text-right cursor-pointer hover:bg-bg-subtle/50"
                       onClick={() => toggleSort("completionTokens")}
                     >
-                      {t("outputTokens")}{" "}
+                      Output Tokens{" "}
                       <SortIcon
                         field="completionTokens"
                         currentSort={sortBy}
@@ -419,7 +418,7 @@ export default function UsageStats() {
                       className="px-6 py-3 text-right cursor-pointer hover:bg-bg-subtle/50"
                       onClick={() => toggleSort("totalTokens")}
                     >
-                      {t("totalTokens")}{" "}
+                      Total Tokens{" "}
                       <SortIcon field="totalTokens" currentSort={sortBy} currentOrder={sortOrder} />
                     </th>
                   </>
@@ -429,7 +428,7 @@ export default function UsageStats() {
                       className="px-6 py-3 text-right cursor-pointer hover:bg-bg-subtle/50"
                       onClick={() => toggleSort("promptTokens")}
                     >
-                      {t("inputCost")}{" "}
+                      Input Cost{" "}
                       <SortIcon
                         field="promptTokens"
                         currentSort={sortBy}
@@ -440,7 +439,7 @@ export default function UsageStats() {
                       className="px-6 py-3 text-right cursor-pointer hover:bg-bg-subtle/50"
                       onClick={() => toggleSort("completionTokens")}
                     >
-                      {t("outputCost")}{" "}
+                      Output Cost{" "}
                       <SortIcon
                         field="completionTokens"
                         currentSort={sortBy}
@@ -451,7 +450,7 @@ export default function UsageStats() {
                       className="px-6 py-3 text-right cursor-pointer hover:bg-bg-subtle/50"
                       onClick={() => toggleSort("cost")}
                     >
-                      {t("totalCost")}{" "}
+                      Total Cost{" "}
                       <SortIcon field="cost" currentSort={sortBy} currentOrder={sortOrder} />
                     </th>
                   </>
@@ -505,7 +504,7 @@ export default function UsageStats() {
               {sortedModels.length === 0 && (
                 <tr>
                   <td colSpan={8} className="px-6 py-8 text-center text-text-muted">
-                    {t("noUsageData")}
+                    No usage recorded yet. Make some requests to see data here.
                   </td>
                 </tr>
               )}
@@ -517,7 +516,7 @@ export default function UsageStats() {
       {/* {t("usageByAccount")} Table */}
       <Card className="overflow-hidden">
         <div className="p-4 border-b border-border bg-bg-subtle/50">
-          <h3 className="font-semibold">{t("usageByAccount")}</h3>
+          <h3 className="font-semibold">Usage by Account</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
@@ -527,35 +526,34 @@ export default function UsageStats() {
                   className="px-6 py-3 cursor-pointer hover:bg-bg-subtle/50"
                   onClick={() => toggleSort("rawModel")}
                 >
-                  {t("model")}{" "}
-                  <SortIcon field="rawModel" currentSort={sortBy} currentOrder={sortOrder} />
+                  Model <SortIcon field="rawModel" currentSort={sortBy} currentOrder={sortOrder} />
                 </th>
                 <th
                   className="px-6 py-3 cursor-pointer hover:bg-bg-subtle/50"
                   onClick={() => toggleSort("provider")}
                 >
-                  {t("provider")}{" "}
+                  Provider{" "}
                   <SortIcon field="provider" currentSort={sortBy} currentOrder={sortOrder} />
                 </th>
                 <th
                   className="px-6 py-3 cursor-pointer hover:bg-bg-subtle/50"
                   onClick={() => toggleSort("accountName")}
                 >
-                  {t("account")}{" "}
+                  Account{" "}
                   <SortIcon field="accountName" currentSort={sortBy} currentOrder={sortOrder} />
                 </th>
                 <th
                   className="px-6 py-3 text-right cursor-pointer hover:bg-bg-subtle/50"
                   onClick={() => toggleSort("requests")}
                 >
-                  {t("requests")}{" "}
+                  Requests{" "}
                   <SortIcon field="requests" currentSort={sortBy} currentOrder={sortOrder} />
                 </th>
                 <th
                   className="px-6 py-3 text-right cursor-pointer hover:bg-bg-subtle/50"
                   onClick={() => toggleSort("lastUsed")}
                 >
-                  {t("lastUsed")}{" "}
+                  Last Used{" "}
                   <SortIcon field="lastUsed" currentSort={sortBy} currentOrder={sortOrder} />
                 </th>
                 {viewMode === "tokens" ? (
@@ -564,7 +562,7 @@ export default function UsageStats() {
                       className="px-6 py-3 text-right cursor-pointer hover:bg-bg-subtle/50"
                       onClick={() => toggleSort("promptTokens")}
                     >
-                      {t("inputTokens")}{" "}
+                      Input Tokens{" "}
                       <SortIcon
                         field="promptTokens"
                         currentSort={sortBy}
@@ -575,7 +573,7 @@ export default function UsageStats() {
                       className="px-6 py-3 text-right cursor-pointer hover:bg-bg-subtle/50"
                       onClick={() => toggleSort("completionTokens")}
                     >
-                      {t("outputTokens")}{" "}
+                      Output Tokens{" "}
                       <SortIcon
                         field="completionTokens"
                         currentSort={sortBy}
@@ -586,7 +584,7 @@ export default function UsageStats() {
                       className="px-6 py-3 text-right cursor-pointer hover:bg-bg-subtle/50"
                       onClick={() => toggleSort("totalTokens")}
                     >
-                      {t("totalTokens")}{" "}
+                      Total Tokens{" "}
                       <SortIcon field="totalTokens" currentSort={sortBy} currentOrder={sortOrder} />
                     </th>
                   </>
@@ -596,7 +594,7 @@ export default function UsageStats() {
                       className="px-6 py-3 text-right cursor-pointer hover:bg-bg-subtle/50"
                       onClick={() => toggleSort("promptTokens")}
                     >
-                      {t("inputCost")}{" "}
+                      Input Cost{" "}
                       <SortIcon
                         field="promptTokens"
                         currentSort={sortBy}
@@ -607,7 +605,7 @@ export default function UsageStats() {
                       className="px-6 py-3 text-right cursor-pointer hover:bg-bg-subtle/50"
                       onClick={() => toggleSort("completionTokens")}
                     >
-                      {t("outputCost")}{" "}
+                      Output Cost{" "}
                       <SortIcon
                         field="completionTokens"
                         currentSort={sortBy}
@@ -618,7 +616,7 @@ export default function UsageStats() {
                       className="px-6 py-3 text-right cursor-pointer hover:bg-bg-subtle/50"
                       onClick={() => toggleSort("cost")}
                     >
-                      {t("totalCost")}{" "}
+                      Total Cost{" "}
                       <SortIcon field="cost" currentSort={sortBy} currentOrder={sortOrder} />
                     </th>
                   </>
@@ -646,8 +644,7 @@ export default function UsageStats() {
                         data.pending > 0 ? "text-primary" : ""
                       }`}
                     >
-                      {data.accountName ||
-                        t("accountLabel", { id: `${data.connectionId?.slice(0, 8)}...` })}
+                      {data.accountName || `Account ${data.connectionId?.slice(0, 8)}...`}
                     </span>
                   </td>
                   <td className="px-6 py-3 text-right">{fmt(data.requests)}</td>
@@ -682,7 +679,8 @@ export default function UsageStats() {
               {sortedAccounts.length === 0 && (
                 <tr>
                   <td colSpan={9} className="px-6 py-8 text-center text-text-muted">
-                    {t("noAccountUsage")}
+                    No account-specific usage recorded yet. Make requests using OAuth accounts to
+                    see data here.
                   </td>
                 </tr>
               )}

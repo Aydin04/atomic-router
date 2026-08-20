@@ -31,7 +31,6 @@ import { resolveEndpointCategory } from "@/shared/constants/endpointCategories";
 import { resolveQuotaKeyScope } from "@/lib/quota/quotaKey";
 import { isQuotaModelName, parseQuotaModelName } from "@/lib/quota/quotaModelNaming";
 import { buildApiKeyUsageLimitPolicyRejection } from "@/lib/usage/apiKeyUsageLimits";
-import { ALL_COMBOS_ACCESS_RULE } from "@/shared/constants/comboAccess";
 
 // Default to no per-key request cap. API keys can still opt into explicit
 // limits via Settings/API Keys, while provider/account quota controls remain
@@ -74,7 +73,6 @@ interface AccessSchedule {
 export interface ApiKeyMetadata {
   id: string;
   name?: string;
-  modelAccessMode?: "all" | "restricted";
   allowedModels?: string[];
   allowedCombos?: string[];
   allowedConnections?: string[];
@@ -99,7 +97,6 @@ export interface ApiKeyMetadata {
   usageLimitEnabled?: boolean;
   dailyUsageLimitUsd?: number | null;
   weeklyUsageLimitUsd?: number | null;
-  compressionEnabled?: boolean;
 }
 
 /**
@@ -182,7 +179,6 @@ function normalizeComboAccessName(value: unknown): string | null {
 }
 
 function matchesComboAccessRule(comboName: string, requestedModel: string, rule: string): boolean {
-  if (rule === ALL_COMBOS_ACCESS_RULE) return true;
   const normalizedRule = normalizeComboAccessName(rule);
   if (!normalizedRule) return false;
   return (
@@ -305,7 +301,7 @@ async function validateStandardRoutingTarget(
   modelStr: string
 ): Promise<Response | null> {
   let requestedComboName: string | null = null;
-  if (Array.isArray(apiKeyInfo.allowedCombos)) {
+  if (apiKeyInfo.allowedCombos && apiKeyInfo.allowedCombos.length > 0) {
     try {
       const comboAccess = await isComboAllowedForKey(apiKeyInfo.allowedCombos, modelStr);
       requestedComboName = comboAccess.comboName;
@@ -322,8 +318,7 @@ async function validateStandardRoutingTarget(
   }
 
   const hasModelRestrictions =
-    apiKeyInfo.modelAccessMode === "restricted" ||
-    Boolean(apiKeyInfo.allowedModels?.length) ||
+    (apiKeyInfo.allowedModels && apiKeyInfo.allowedModels.length > 0) ||
     apiKeyInfo.disableNonPublicModels === true;
   if (!requestedComboName && hasModelRestrictions && modelStr.startsWith("auto/")) {
     requestedComboName = modelStr;
@@ -529,9 +524,7 @@ async function validateModelAccess(context: PolicyContext): Promise<Response | n
   let requestedComboName = comboAccess.comboName;
 
   const hasModelRestrictions =
-    apiKeyInfo.modelAccessMode === "restricted" ||
-    Boolean(apiKeyInfo.allowedModels?.length) ||
-    apiKeyInfo.disableNonPublicModels === true;
+    Boolean(apiKeyInfo.allowedModels?.length) || apiKeyInfo.disableNonPublicModels === true;
   if (!requestedComboName && hasModelRestrictions) {
     if (modelStr.startsWith("auto/") || modelStr.startsWith("qtSd/")) {
       requestedComboName = modelStr;
@@ -559,7 +552,7 @@ async function validateComboAccess(
   allowedCombos: string[] | undefined,
   modelStr: string
 ): Promise<{ comboName: string | null; rejection: Response | null }> {
-  if (!Array.isArray(allowedCombos)) return { comboName: null, rejection: null };
+  if (!allowedCombos?.length) return { comboName: null, rejection: null };
   try {
     const comboAccess = await isComboAllowedForKey(allowedCombos, modelStr);
     if (comboAccess.allowed) return { comboName: comboAccess.comboName, rejection: null };

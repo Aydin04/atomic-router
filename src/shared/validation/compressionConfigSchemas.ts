@@ -309,12 +309,6 @@ export const STACKED_PIPELINE_ENGINE_INTENSITIES: Record<string, readonly string
   ultra: ["ultra"],
 };
 
-export const liteConfigSchema = z
-  .object({
-    compressToolResults: z.boolean().optional(),
-  })
-  .strict();
-
 export const engineToggleSchema = z.object({
   enabled: z.boolean(),
   level: z.string().optional(),
@@ -367,7 +361,6 @@ export const compressionSettingsUpdateSchema = z
     languageConfig: languageConfigSchema.optional(),
     aggressive: aggressiveConfigSchema.optional(),
     ultra: ultraConfigSchema.optional(),
-    lite: liteConfigSchema.optional(),
     headroom: headroomConfigSchema.optional(),
     sessionDedup: sessionDedupConfigSchema.optional(),
     ccr: ccrConfigSchema.optional(),

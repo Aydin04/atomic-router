@@ -1,7 +1,6 @@
 "use client";
 
 import { cn } from "@/shared/utils/cn";
-import { useTranslations } from "next-intl";
 import Toggle from "./Toggle";
 
 interface NoAuthProviderToggleProps {
@@ -17,21 +16,20 @@ export default function NoAuthProviderToggle({
   onEnabledChange,
   className,
 }: NoAuthProviderToggleProps) {
-  const t = useTranslations("common");
   if (!onEnabledChange) return null;
 
   return (
     <div className={cn("inline-flex items-center gap-2 rounded-md px-1 py-1", className)}>
       <span className="text-sm font-medium text-text-main">
-        {saving ? t("saving") : enabled ? t("enabled") : t("disabled")}
+        {saving ? "Saving" : enabled ? "Enabled" : "Disabled"}
       </span>
       <Toggle
         size="lg"
         checked={enabled}
         disabled={saving}
         onChange={onEnabledChange}
-        ariaLabel={t("toggleNoAuthProvider")}
-        title={enabled ? t("disableProvider") : t("enableProvider")}
+        ariaLabel="Toggle no-auth provider"
+        title={enabled ? "Disable provider" : "Enable provider"}
       />
     </div>
   );

@@ -1,4 +1,5 @@
-import { describe, it, expect } from "vitest";
+import { describe, it } from "node:test";
+import assert from "node:assert/strict";
 import {
   analyzeSpecificity,
   getSpecificityLevel,
@@ -11,13 +12,13 @@ describe("SpecificityDetector", () => {
   describe("analyzeSpecificity - trivial query", () => {
     it("returns score <= 5 for greeting", () => {
       const result = analyzeSpecificity({ messages: [{ content: "Hello, how are you?" }] });
-      expect(result.score).toBeLessThanOrEqual(5);
+      assert.ok(result.score <= 5);
     });
 
     it("level is 'trivial' for greeting", () => {
       const result = analyzeSpecificity({ messages: [{ content: "Hi there!" }] });
       const level = getSpecificityLevel(result.score);
-      expect(level).toBe("trivial");
+      assert.equal(level, "trivial");
     });
   });
 
@@ -26,8 +27,8 @@ describe("SpecificityDetector", () => {
       const result = analyzeSpecificity({
         messages: [{ content: "What is the capital of France?" }],
       });
-      expect(result.score).toBeGreaterThanOrEqual(0);
-      expect(result.score).toBeLessThanOrEqual(20);
+      assert.ok(result.score >= 0);
+      assert.ok(result.score <= 20);
     });
 
     it("returns 'simple' or lower for factual question", () => {
@@ -35,7 +36,7 @@ describe("SpecificityDetector", () => {
         messages: [{ content: "Who invented Python?" }],
       });
       const level = getSpecificityLevel(result.score);
-      expect(["trivial", "simple"].includes(level)).toBe(true);
+      assert.ok(["trivial", "simple"].includes(level));
     });
   });
 
@@ -44,14 +45,14 @@ describe("SpecificityDetector", () => {
       const result = analyzeSpecificity({
         messages: [{ content: "```ts\nfunction foo(){}\n```" }],
       });
-      expect(result.score, `Expected >= 5, got ${result.score}`).toBeGreaterThanOrEqual(5);
+      assert.ok(result.score >= 5, `Expected >= 5, got ${result.score}`);
     });
 
     it("code complexity is detected in code blocks", () => {
       const result = analyzeSpecificity({
         messages: [{ content: "```ts\nfunction foo(){}\n```" }],
       });
-      expect(result.breakdown.codeComplexity).toBeGreaterThan(0);
+      assert.ok(result.breakdown.codeComplexity > 0);
     });
 
     it("returns higher score for code + reasoning", () => {
@@ -65,7 +66,7 @@ describe("SpecificityDetector", () => {
           { content: "```typescript\nclass BST<T> { insert(val: T): void {} }\n```" },
         ],
       });
-      expect(result.score, `Expected >= 10, got ${result.score}`).toBeGreaterThanOrEqual(10);
+      assert.ok(result.score >= 10, `Expected >= 10, got ${result.score}`);
     });
   });
 
@@ -79,82 +80,82 @@ describe("SpecificityDetector", () => {
           },
         ],
       });
-      expect(result.breakdown.reasoningDepth).toBeGreaterThan(0);
+      assert.ok(result.breakdown.reasoningDepth > 0);
     });
   });
 
   describe("getSpecificityLevel", () => {
     it("returns 'trivial' for score 0-5", () => {
-      expect(getSpecificityLevel(0)).toBe("trivial");
-      expect(getSpecificityLevel(3)).toBe("trivial");
-      expect(getSpecificityLevel(5)).toBe("trivial");
+      assert.equal(getSpecificityLevel(0), "trivial");
+      assert.equal(getSpecificityLevel(3), "trivial");
+      assert.equal(getSpecificityLevel(5), "trivial");
     });
 
     it("returns 'simple' for score 6-20", () => {
-      expect(getSpecificityLevel(6)).toBe("simple");
-      expect(getSpecificityLevel(10)).toBe("simple");
-      expect(getSpecificityLevel(20)).toBe("simple");
+      assert.equal(getSpecificityLevel(6), "simple");
+      assert.equal(getSpecificityLevel(10), "simple");
+      assert.equal(getSpecificityLevel(20), "simple");
     });
 
     it("returns 'moderate' for score 6-40", () => {
-      expect(getSpecificityLevel(21)).toBe("moderate");
-      expect(getSpecificityLevel(30)).toBe("moderate");
-      expect(getSpecificityLevel(40)).toBe("moderate");
+      assert.equal(getSpecificityLevel(21), "moderate");
+      assert.equal(getSpecificityLevel(30), "moderate");
+      assert.equal(getSpecificityLevel(40), "moderate");
     });
 
     it("returns 'complex' for score 41+", () => {
-      expect(getSpecificityLevel(41)).toBe("complex");
-      expect(getSpecificityLevel(46)).toBe("complex");
-      expect(getSpecificityLevel(65)).toBe("complex");
+      assert.equal(getSpecificityLevel(41), "complex");
+      assert.equal(getSpecificityLevel(46), "complex");
+      assert.equal(getSpecificityLevel(65), "complex");
     });
 
     it("returns 'expert' for score 66+", () => {
-      expect(getSpecificityLevel(66)).toBe("expert");
-      expect(getSpecificityLevel(80)).toBe("expert");
-      expect(getSpecificityLevel(100)).toBe("expert");
+      assert.equal(getSpecificityLevel(66), "expert");
+      assert.equal(getSpecificityLevel(80), "expert");
+      assert.equal(getSpecificityLevel(100), "expert");
     });
   });
 
   describe("getRecommendedMinTier", () => {
     it("returns 'free' for 'trivial'", () => {
-      expect(getRecommendedMinTier("trivial")).toBe("free");
+      assert.equal(getRecommendedMinTier("trivial"), "free");
     });
 
     it("returns 'free' for 'simple'", () => {
-      expect(getRecommendedMinTier("simple")).toBe("free");
+      assert.equal(getRecommendedMinTier("simple"), "free");
     });
 
     it("returns 'cheap' for 'moderate'", () => {
-      expect(getRecommendedMinTier("moderate")).toBe("cheap");
+      assert.equal(getRecommendedMinTier("moderate"), "cheap");
     });
 
     it("returns 'premium' for 'complex'", () => {
-      expect(getRecommendedMinTier("complex")).toBe("cheap");
+      assert.equal(getRecommendedMinTier("complex"), "cheap");
     });
 
     it("returns 'premium' for 'expert'", () => {
-      expect(getRecommendedMinTier("expert")).toBe("premium");
+      assert.equal(getRecommendedMinTier("expert"), "premium");
     });
   });
 
   describe("isHighSpecificity", () => {
     it("returns false for trivial query", () => {
       const result = analyzeSpecificity({ messages: [{ content: "Hi" }] });
-      expect(isHighSpecificity(result)).toBe(false);
+      assert.equal(isHighSpecificity(result), false);
     });
 
     it("returns false for simple query", () => {
       const result = analyzeSpecificity({
         messages: [{ content: "What is Python?" }],
       });
-      expect(isHighSpecificity(result)).toBe(false);
+      assert.equal(isHighSpecificity(result), false);
     });
   });
 
   describe("isLowSpecificity", () => {
     it("returns true for trivial query", () => {
       const result = analyzeSpecificity({ messages: [{ content: "Hi" }] });
-      expect(isLowSpecificity(result)).toBe(true);
+      assert.equal(isLowSpecificity(result), true);
     });
 
     it("returns false for complex query", () => {
@@ -171,45 +172,45 @@ describe("SpecificityDetector", () => {
           },
         ],
       });
-      expect(isLowSpecificity(result)).toBe(false);
+      assert.equal(isLowSpecificity(result), false);
     });
   });
 
   describe("analyzeSpecificity returns complete result", () => {
     it("returns score, breakdown, rulesTriggered, inputTokens, confidence", () => {
       const result = analyzeSpecificity({ messages: [{ content: "Test" }] });
-      expect("score" in result).toBe(true);
-      expect("breakdown" in result).toBe(true);
-      expect("rulesTriggered" in result).toBe(true);
-      expect("inputTokens" in result).toBe(true);
-      expect("confidence" in result).toBe(true);
+      assert.ok("score" in result);
+      assert.ok("breakdown" in result);
+      assert.ok("rulesTriggered" in result);
+      assert.ok("inputTokens" in result);
+      assert.ok("confidence" in result);
     });
 
     it("returns all 6 breakdown categories", () => {
       const result = analyzeSpecificity({ messages: [{ content: "Test" }] });
-      expect("codeComplexity" in result.breakdown).toBe(true);
-      expect("mathComplexity" in result.breakdown).toBe(true);
-      expect("reasoningDepth" in result.breakdown).toBe(true);
-      expect("contextSize" in result.breakdown).toBe(true);
-      expect("toolCalling" in result.breakdown).toBe(true);
-      expect("domainSpecificity" in result.breakdown).toBe(true);
+      assert.ok("codeComplexity" in result.breakdown);
+      assert.ok("mathComplexity" in result.breakdown);
+      assert.ok("reasoningDepth" in result.breakdown);
+      assert.ok("contextSize" in result.breakdown);
+      assert.ok("toolCalling" in result.breakdown);
+      assert.ok("domainSpecificity" in result.breakdown);
     });
 
     it("returns non-negative scores for all categories", () => {
       const result = analyzeSpecificity({ messages: [{ content: "Hello" }] });
-      expect(result.breakdown.codeComplexity).toBeGreaterThanOrEqual(0);
-      expect(result.breakdown.mathComplexity).toBeGreaterThanOrEqual(0);
-      expect(result.breakdown.reasoningDepth).toBeGreaterThanOrEqual(0);
-      expect(result.breakdown.contextSize).toBeGreaterThanOrEqual(0);
-      expect(result.breakdown.toolCalling).toBeGreaterThanOrEqual(0);
-      expect(result.breakdown.domainSpecificity).toBeGreaterThanOrEqual(0);
+      assert.ok(result.breakdown.codeComplexity >= 0);
+      assert.ok(result.breakdown.mathComplexity >= 0);
+      assert.ok(result.breakdown.reasoningDepth >= 0);
+      assert.ok(result.breakdown.contextSize >= 0);
+      assert.ok(result.breakdown.toolCalling >= 0);
+      assert.ok(result.breakdown.domainSpecificity >= 0);
     });
   });
 
   describe("tool calling detection", () => {
     it("returns 0 when no tools defined", () => {
       const result = analyzeSpecificity({ messages: [{ content: "Hello" }] });
-      expect(result.breakdown.toolCalling).toBe(0);
+      assert.equal(result.breakdown.toolCalling, 0);
     });
 
     it("returns positive score when tools present", () => {
@@ -220,7 +221,7 @@ describe("SpecificityDetector", () => {
           { type: "function", function: { name: "weather", description: "get weather" } },
         ],
       });
-      expect(result.breakdown.toolCalling).toBeGreaterThan(0);
+      assert.ok(result.breakdown.toolCalling > 0);
     });
   });
 
@@ -233,7 +234,7 @@ describe("SpecificityDetector", () => {
       const t0 = performance.now();
       analyzeSpecificity({ messages: msgs });
       const elapsed = performance.now() - t0;
-      expect(elapsed, `Expected < 5ms, got ${elapsed.toFixed(2)}ms`).toBeLessThan(5);
+      assert.ok(elapsed < 5, `Expected < 5ms, got ${elapsed.toFixed(2)}ms`);
     });
   });
 });

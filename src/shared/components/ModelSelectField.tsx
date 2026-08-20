@@ -1,17 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
 import Select from "./Select";
 import Input from "./Input";
 
-export interface ApiModel {
+interface ApiModel {
   provider: string;
   model: string;
   fullModel?: string;
-  type?: string;
-  subtype?: string;
-  supportsVision?: boolean;
 }
 
 export interface ModelSelectFieldProps {
@@ -23,47 +19,12 @@ export interface ModelSelectFieldProps {
   ariaLabel?: string;
   /** Render a plain text fallback (custom option / off-catalog) — default true. */
   allowCustom?: boolean;
-  /** Let operators select the empty-value placeholder (for Auto/default semantics). */
-  allowEmpty?: boolean;
-  /** Optional catalog predicate, e.g. restrict the picker to STT models. */
-  modelFilter?: (model: ApiModel) => boolean;
-  /** Model API to read. The unified catalog includes specialty audio/video surfaces. */
-  modelSource?: "available" | "catalog";
   className?: string;
 }
 
 interface FetchState {
   status: "loading" | "ready" | "error";
   options: { value: string; label: string }[];
-}
-
-function asRecord(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === "object" ? (value as Record<string, unknown>) : null;
-}
-
-function readCatalogModels(value: unknown): ApiModel[] {
-  const catalog = asRecord(asRecord(value)?.catalog);
-  if (!catalog) return [];
-
-  const models: ApiModel[] = [];
-  for (const [provider, rawBucket] of Object.entries(catalog)) {
-    const bucket = asRecord(rawBucket);
-    if (!Array.isArray(bucket?.models)) continue;
-    for (const rawModel of bucket.models) {
-      const model = asRecord(rawModel);
-      const id = typeof model?.id === "string" ? model.id : "";
-      if (!id) continue;
-      const providerPrefix = `${provider}/`;
-      models.push({
-        provider,
-        model: id.startsWith(providerPrefix) ? id.slice(providerPrefix.length) : id,
-        fullModel: id.startsWith(providerPrefix) ? id : `${providerPrefix}${id}`,
-        type: typeof model?.type === "string" ? model.type : undefined,
-        subtype: typeof model?.subtype === "string" ? model.subtype : undefined,
-      });
-    }
-  }
-  return models;
 }
 
 /**
@@ -82,29 +43,18 @@ export default function ModelSelectField({
   placeholder,
   ariaLabel,
   allowCustom = true,
-  allowEmpty = false,
-  modelFilter,
-  modelSource = "available",
   className,
 }: ModelSelectFieldProps) {
-  const t = useTranslations("common");
   const [state, setState] = useState<FetchState>({ status: "loading", options: [] });
 
   useEffect(() => {
     let cancelled = false;
-    const endpoint = modelSource === "catalog" ? "/api/models/catalog" : "/api/models";
-    fetch(endpoint)
+    fetch("/api/models")
       .then((res) => (res.ok ? res.json() : Promise.reject(new Error("fetch failed"))))
       .then((data) => {
         if (cancelled) return;
-        const models: ApiModel[] =
-          modelSource === "catalog"
-            ? readCatalogModels(data)
-            : Array.isArray(data?.models)
-              ? data.models
-              : [];
-        const filteredModels = modelFilter ? models.filter(modelFilter) : models;
-        const options = filteredModels.map((m) => {
+        const models: ApiModel[] = Array.isArray(data?.models) ? data.models : [];
+        const options = models.map((m) => {
           const full = m.fullModel || `${m.provider}/${m.model}`;
           return { value: full, label: full };
         });
@@ -116,7 +66,7 @@ export default function ModelSelectField({
     return () => {
       cancelled = true;
     };
-  }, [modelFilter, modelSource]);
+  }, []);
 
   if (state.status === "error" && allowCustom) {
     return (
@@ -135,7 +85,7 @@ export default function ModelSelectField({
   const hasKnownValue = value === "" || state.options.some((o) => o.value === value);
   const options =
     !hasKnownValue && allowCustom
-      ? [{ value, label: `${value} (${t("custom")})` }, ...state.options]
+      ? [{ value, label: `${value} (custom)` }, ...state.options]
       : state.options;
 
   return (
@@ -144,10 +94,7 @@ export default function ModelSelectField({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       options={options}
-      placeholder={
-        state.status === "loading" ? t("loadingModels") : placeholder || t("selectAModel")
-      }
-      placeholderDisabled={!allowEmpty}
+      placeholder={state.status === "loading" ? "Loading models…" : placeholder || "Select a model"}
       disabled={disabled || state.status === "loading"}
       aria-label={ariaLabel}
       className={className}

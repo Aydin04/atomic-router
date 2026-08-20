@@ -464,17 +464,12 @@ function openaiToGeminiBase(
 
             // Gemini expects the signature on the functionCall part itself.
             // If we are in a mode where missing signatures cause 400s (and we couldn't find one),
-            // safely default to the bypass string to protect against 400s. The bypass sentinel is
-            // an audit-trail risk (a magic validator-bypass string upstream could log/flag), so
-            // operators can disable it via ANTIGRAVITY_ALLOW_SIGNATURE_BYPASS=0 — real signatures
-            // are always preferred; the sentinel only fills the gap when none is available.
-            const signatureBypassEnabled =
-              toolNameOptions.supportsSignatureBypass &&
-              signaturelessToolCallMode !== "text" &&
-              process.env.ANTIGRAVITY_ALLOW_SIGNATURE_BYPASS !== "0";
+            // safely default to the bypass string to protect against 400s.
             const finalSignature =
               embeddedThoughtSignature ||
-              (signatureBypassEnabled ? "skip_thought_signature_validator" : undefined);
+              (toolNameOptions.supportsSignatureBypass && signaturelessToolCallMode !== "text"
+                ? "skip_thought_signature_validator"
+                : undefined);
             parts.push({
               ...(finalSignature ? { thoughtSignature: finalSignature } : {}),
               functionCall: {
@@ -739,24 +734,11 @@ function wrapInCloudCodeEnvelope(model, cloudCodeRequest, credentials = null) {
     envelope._toolNameMap = cloudCodeRequest._toolNameMap;
   }
 
-  // #9030 — Client system content must NOT be combined with default in systemInstruction
-  //
-  // The upstream Antigravity / Cloud Code endpoint rejects oversized systemInstruction
-  // with 429 RESOURCE_EXHAUSTED. Keep only the lightweight ANTIGRAVITY_DEFAULT_SYSTEM
-  // in systemInstruction and relocate any client system content (which can be very
-  // large — Hermes ~125k tokens) to the first user message.
   const defaultPart: GeminiPart = { text: ANTIGRAVITY_DEFAULT_SYSTEM };
-  const clientParts = envelope.request.systemInstruction?.parts?.slice() ?? [];
-  envelope.request.systemInstruction = { role: "system", parts: [defaultPart] };
-
-  if (clientParts.length > 0) {
-    // Prepend client system parts to the first user message so they still guide
-    // the model's behavior early in the conversation.
-    if (envelope.request.contents && envelope.request.contents.length > 0) {
-      envelope.request.contents[0].parts.unshift(...clientParts);
-    } else {
-      envelope.request.contents = [{ role: "user", parts: [...clientParts] }];
-    }
+  if (envelope.request.systemInstruction?.parts) {
+    envelope.request.systemInstruction.parts.unshift(defaultPart);
+  } else {
+    envelope.request.systemInstruction = { role: "system", parts: [defaultPart] };
   }
 
   // Strip Gemini built-in tool *names* out of functionDeclarations: Antigravity's

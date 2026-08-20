@@ -31,27 +31,7 @@
 
 import { wildcardMatch } from "../wildcardRouter.ts";
 import { getProviderModels } from "../../config/providerModels.ts";
-import { getActiveSyncedCatalog } from "../../../src/lib/db/models/activeSyncedCatalog.ts";
-import { filterAlibabaFreeTierModels, isAlibabaModelStudioProvider } from "../alibabaFreeTier.ts";
-import {
-  filterAlibabaFreeEligibleModels,
-  buildAlibabaFreeTierFilterContext,
-} from "../alibabaFreeTierDiscovery.ts";
-import {
-  buildAlibabaFreeAudioFilterContext,
-  buildAlibabaFreeMultimodalFilterContext,
-  buildAlibabaFreeVisionFilterContext,
-  filterAlibabaFreeAudioEligibleModels,
-  filterAlibabaFreeMultimodalEligibleModels,
-  filterAlibabaFreeVisionEligibleModels,
-} from "../alibabaFreeTierQuotaFetcher.ts";
-import type { AlibabaConnectionLike } from "../alibabaFreeTierQuotaFetcher.ts";
-import {
-  isAlibabaFreeTierAudioComboName,
-  isAlibabaFreeTierMultimodalComboName,
-  isAlibabaFreeTierTextComboName,
-  isAlibabaFreeTierVisionComboName,
-} from "../dashscopeTextModels.ts";
+import { getSyncedAvailableModels } from "../../../src/lib/db/models.ts";
 import type { ComboLike } from "./types.ts";
 
 /** Sentinel pattern used for "all models of a provider". */
@@ -136,73 +116,39 @@ function parseWildcardEntry(entry: unknown): ProviderWildcardSpec | null {
 }
 
 /**
- * Collect candidate model IDs using the active synced catalog as the
- * authoritative source when it is non-empty. Static registry models remain a
- * fail-open fallback when no active usable catalog exists.
+ * Collect candidate model IDs for a provider from two sources:
+ *  1. Synced available models in the DB (runtime-dynamic; custom/OAuth providers)
+ *  2. Static provider registry (built-in providers bundled with the release)
+ *
+ * The union is deduped by model id.
  */
 async function collectProviderModelIds(providerId: string): Promise<string[]> {
-  const liveCatalog = await getActiveSyncedCatalog(providerId);
+  const seen = new Set<string>();
+  const ids: string[] = [];
 
-  if (liveCatalog.authoritative) {
-    return liveCatalog.models.map((model) => model.id);
-  }
-
-  return getProviderModels(providerId).map((model) => model.id);
-}
-
-async function filterAlibabaFreeDrainedModelIds(
-  providerId: string,
-  modelIds: string[],
-  connectionId: string | null,
-  comboName: string
-): Promise<string[]> {
-  if (!isAlibabaModelStudioProvider(providerId) || !connectionId) {
-    return modelIds;
-  }
+  // 1. Synced DB models (highest priority — reflects the live catalog)
   try {
-    const { getProviderConnections } = await import("../../../src/lib/db/providers.ts");
-    const connections = await getProviderConnections({ provider: providerId });
-    const connection = connections.find((entry) => entry.id === connectionId);
-    if (!connection) return modelIds;
-
-    if (isAlibabaFreeTierVisionComboName(comboName)) {
-      return filterAlibabaFreeVisionEligibleModels(
-        modelIds,
-        buildAlibabaFreeVisionFilterContext(
-          connections as unknown as readonly AlibabaConnectionLike[],
-          connectionId
-        )
-      );
+    const synced = await getSyncedAvailableModels(providerId);
+    for (const m of synced) {
+      if (m.id && !seen.has(m.id)) {
+        seen.add(m.id);
+        ids.push(m.id);
+      }
     }
-    if (isAlibabaFreeTierMultimodalComboName(comboName)) {
-      return filterAlibabaFreeMultimodalEligibleModels(
-        modelIds,
-        buildAlibabaFreeMultimodalFilterContext(
-          connections as unknown as readonly AlibabaConnectionLike[],
-          connectionId
-        )
-      );
-    }
-    if (isAlibabaFreeTierAudioComboName(comboName)) {
-      return filterAlibabaFreeAudioEligibleModels(
-        modelIds,
-        buildAlibabaFreeAudioFilterContext(
-          connections as unknown as readonly AlibabaConnectionLike[],
-          connectionId
-        )
-      );
-    }
-    return filterAlibabaFreeEligibleModels(
-      modelIds,
-      buildAlibabaFreeTierFilterContext(
-        connections as unknown as readonly AlibabaConnectionLike[],
-        connectionId
-      ),
-      { strictAllowlist: isAlibabaFreeTierTextComboName(comboName) }
-    );
   } catch {
-    return modelIds;
+    // Non-fatal — DB may be offline in tests or at early init.
   }
+
+  // 2. Static registry models (fallback / built-in providers)
+  const registryModels = getProviderModels(providerId);
+  for (const m of registryModels) {
+    if (m.id && !seen.has(m.id)) {
+      seen.add(m.id);
+      ids.push(m.id);
+    }
+  }
+
+  return ids;
 }
 
 /**
@@ -216,15 +162,8 @@ async function expandWildcardSpec(
   spec: ProviderWildcardSpec,
   comboName: string
 ): Promise<unknown[] | null> {
-  let modelIds = await collectProviderModelIds(spec.providerId);
+  const modelIds = await collectProviderModelIds(spec.providerId);
   if (modelIds.length === 0) return null;
-
-  modelIds = await filterAlibabaFreeDrainedModelIds(
-    spec.providerId,
-    modelIds,
-    spec.connectionId,
-    comboName
-  );
 
   const pattern = spec.modelPattern;
   const matchingIds =

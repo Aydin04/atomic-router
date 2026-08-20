@@ -7,19 +7,9 @@
  * shapes the handler already used inline; behaviour is unchanged.
  */
 
-export type ClaudeContentBlock = {
-  type?: string;
-  text?: string;
-  name?: string;
-  tool_use_id?: string;
-  cache_control?: unknown;
-  signature?: string;
-  thinking?: string;
-  [key: string]: unknown;
-};
+export type ClaudeContentBlock = Record<string, unknown>;
 
 export type ClaudeMessage = {
-  role?: string;
-  content?: string | ClaudeContentBlock[];
-  [key: string]: unknown;
+  role?: unknown;
+  content?: unknown;
 };

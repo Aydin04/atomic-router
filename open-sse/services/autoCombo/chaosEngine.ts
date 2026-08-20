@@ -53,28 +53,16 @@ export type ChaosPart = {
 };
 
 /**
- * Build the SSE wrapper for one chaos panel part.
- *
- * By DEFAULT only an SSE comment (`: chaos ...`) is emitted — comments are
- * ignored by every SSE parser per spec, so OpenAI-compatible clients
- * (openai-node, @ai-sdk/openai-compatible, …) never see a non-`choices`
- * `data:` payload and their schema validation cannot fail with an
- * `invalid_union` error.
- *
- * When `emitCustomEvent` is true (opt-in via
- * `stream_options.include_chaos_parts`), the custom event name
- * `omni-chaos-part` + metadata `data:` block is also emitted so a
- * protocol-aware IDE can split panels out.
+ * Build the SSE comment/event wrapper for one chaos panel part.
+ * We emit a custom event name `omni-chaos-part` so a protocol-aware IDE can
+ * split it out; non-aware clients reading OpenAI-style SSE will simply ignore
+ * the unknown event and use the final `data:` chunk below.
  *
  * The part's text is NOT included in the metadata event — it arrives in the
  * final `data:` chunk for the primary model. This keeps each broadcast event
  * small (metadata-only) so SSE buffering stays predictable.
  */
-export function serializeChaosPart(
-  part: ChaosPart,
-  isFinal: boolean,
-  emitCustomEvent = false
-): string {
+export function serializeChaosPart(part: ChaosPart, isFinal: boolean): string {
   const meta = {
     type: "omni-chaos-part",
     model: part.model,
@@ -83,11 +71,11 @@ export function serializeChaosPart(
     final: isFinal,
     ...(part.error ? { error: part.error } : {}),
   };
-  const comment = `: chaos ${part.index} ${part.ok ? "ok" : "fail"} ${part.model}\n`;
-  if (!emitCustomEvent) {
-    return comment + "\n";
-  }
-  return comment + `event: omni-chaos-part\n` + `data: ${JSON.stringify(meta)}\n\n`;
+  return (
+    `: chaos ${part.index} ${part.ok ? "ok" : "fail"} ${part.model}\n` +
+    `event: omni-chaos-part\n` +
+    `data: ${JSON.stringify(meta)}\n\n`
+  );
 }
 
 /**
@@ -342,11 +330,9 @@ function concatSseText(sse: string): string {
  * `config.chaos.enabled` flag is set (the `auto/chaos` virtual combo).
  *
  * Returns a single Response whose body is an SSE stream:
- *   - one SSE comment (`: chaos N ...`) per panel model, enqueued
- *     PROGRESSIVELY as each model lands (comments are ignored by every SSE
- *     parser, so OpenAI-compatible clients see only the final chunk)
- *   - when `stream_options.include_chaos_parts: true` is set, the per-panel
- *     `omni-chaos-part` custom event is emitted instead of the bare comment
+ *   - one `omni-chaos-part` event per panel model, enqueued PROGRESSIVELY as
+ *     each model lands (so the client starts receiving answers immediately,
+ *     without waiting for the whole panel to finish)
  *   - a final `data:` OpenAI-style chunk carrying the primary model's answer
  *     (so non-aware clients / IDEs still get a usable completion)
  *   - a terminating `data: [DONE]`
@@ -368,14 +354,6 @@ export async function handleChaosChat(opts: {
   const panel = Array.isArray(models) ? models.filter(Boolean) : [];
   const hardTimeout = tuning?.panelHardTimeoutMs ?? CHAOS_DEFAULTS.panelHardTimeoutMs;
   const minPanel = tuning?.minPanel ?? CHAOS_DEFAULTS.minPanel;
-  // Opt-in gate: only protocol-aware clients request the custom event. OpenAI
-  // SDK validators choke on any `data:` payload without `choices`/`error`, so
-  // the default MUST be comment-only output.
-  const streamOptions = (body as Record<string, unknown> | null | undefined)?.stream_options;
-  const emitCustomEvent =
-    typeof streamOptions === "object" &&
-    streamOptions !== null &&
-    (streamOptions as Record<string, unknown>).include_chaos_parts === true;
   if (panel.length === 0) {
     return errorResponse(400, "Chaos combo has no models");
   }
@@ -418,7 +396,7 @@ export async function handleChaosChat(opts: {
           hardTimeout,
           log,
           onResult: async (part) => {
-            await safeEnqueue(serializeChaosPart(part, false, emitCustomEvent));
+            await safeEnqueue(serializeChaosPart(part, false));
           },
         });
       });

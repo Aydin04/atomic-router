@@ -10,7 +10,7 @@
  * stays under the complexity cap.
  */
 
-import { type CompressionStats } from "../../services/compression/types.ts";
+import { type CompressionStats } from "../../services/compression/stats.ts";
 
 type LoggerLike =
   | {

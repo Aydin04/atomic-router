@@ -1287,7 +1287,7 @@ export class MuseSparkWebExecutor extends BaseExecutor {
     if (!authorization) {
       return errorResult(
         400,
-        "Missing Authorization for Meta AI WebSocket — paste the ecto1:... WS auth token from meta.ai DevTools (Network → WS → clippy request Authorization param), alongside your ecto_1_sess cookie.",
+        "Missing Authorization for Meta AI WebSocket — your cookie must include an ecto1:... auth token.",
         "missing_authorization",
         {},
         body

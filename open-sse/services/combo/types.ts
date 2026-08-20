@@ -95,8 +95,6 @@ export type ComboNestingContext = {
   attemptBudget: { count: number; limit: number };
 };
 
-export type HiddenModelsByProvider = ReadonlyMap<string, ReadonlySet<string>>;
-
 export type HandleComboChatOptions = {
   body: Record<string, unknown>;
   combo: ComboLike;
@@ -109,12 +107,12 @@ export type HandleComboChatOptions = {
   signal?: AbortSignal | null;
   apiKeyAllowedConnections?: string[] | null;
   nesting?: ComboNestingContext | null;
-  hiddenModelsByProvider?: HiddenModelsByProvider;
-  /** Native Responses clients (for example Codex CLI/Desktop) manage compaction themselves. */
-  clientManagedResponsesContext?: boolean;
 };
 
-export type HandleRoundRobinOptions = Omit<HandleComboChatOptions, "apiKeyAllowedConnections">;
+export type HandleRoundRobinOptions = Omit<
+  HandleComboChatOptions,
+  "relayOptions" | "apiKeyAllowedConnections"
+>;
 
 export type HistoricalLatencyStatsEntry = {
   totalRequests?: number;
@@ -164,15 +162,12 @@ export type ResolvedComboTarget = {
   executionKey: string;
   modelStr: string;
   provider: string;
-  authType?: string | null;
   providerId: string | null;
   connectionId: string | null;
   allowedConnectionIds?: string[] | null;
   weight: number;
   label: string | null;
-  prompt?: string | null;
   failoverBeforeRetry?: unknown;
-  fallbackOnlyOnQuotaExhaustion?: boolean;
   trafficType?: "production" | "shadow";
   /**
    * Fingerprint-based account pin resolved from a combo builder composite
@@ -199,7 +194,6 @@ export type ResolvedComboRefTarget = {
   comboName: string;
   weight: number;
   label: string | null;
-  fallbackOnlyOnQuotaExhaustion?: boolean;
 };
 
 export type ResolvedComboUnit = ResolvedComboTarget | ResolvedComboRefTarget;

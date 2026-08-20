@@ -1,4 +1,6 @@
-import { readHeaderValue, type AuthRequestHeaders } from "./headerReader.ts";
+import { readHeaderValue } from "./auth.ts";
+
+type AuthRequestHeaders = Headers | Record<string, string | string[] | undefined>;
 
 /**
  * Issue #7034: `gemini-cli` (and any `@google/genai`-based client) sends its

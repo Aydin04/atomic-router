@@ -5,24 +5,12 @@ import { getGitHubCopilotRefreshHeaders } from "../../../config/providerHeaderPr
 import { runWithProxyContext } from "../../../utils/proxyFetch.ts";
 
 /**
- * Refresh GitHub Copilot token using a GitHub access token.
- *
- * `baseUrl` defaults to github.com's Copilot API but can be overridden to a
- * GitHub Enterprise host's `<gheUrl>/api/v3` so the same helper serves both
- * the `github` and `ghe-copilot` providers (GHE has its own per-enterprise
- * Copilot token endpoint; api.github.com never issues a token scoped to a
- * GHE account).
+ * Refresh GitHub Copilot token using GitHub access token
  */
-export async function refreshCopilotToken(
-  githubAccessToken,
-  log,
-  proxyConfig: unknown = null,
-  baseUrl: string = "https://api.github.com"
-) {
+export async function refreshCopilotToken(githubAccessToken, log, proxyConfig: unknown = null) {
   try {
-    const tokenUrl = `${baseUrl.replace(/\/+$/, "")}/copilot_internal/v2/token`;
     const response = await runWithProxyContext(proxyConfig, () =>
-      fetch(tokenUrl, {
+      fetch("https://api.github.com/copilot_internal/v2/token", {
         headers: getGitHubCopilotRefreshHeaders(`token ${githubAccessToken}`),
       })
     );

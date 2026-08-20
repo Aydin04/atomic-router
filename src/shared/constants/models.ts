@@ -21,10 +21,7 @@ import { PROVIDER_MODELS as MODELS } from "@omniroute/open-sse/config/providerMo
 const PASSTHROUGH_PROVIDERS = new Set(
   Object.entries(AI_PROVIDERS)
     .filter(([, p]) => (p as any).passthroughModels)
-    .flatMap(([key, provider]) => {
-      const alias = (provider as { alias?: unknown }).alias;
-      return typeof alias === "string" && alias.length > 0 ? [key, alias] : [key];
-    })
+    .map(([key]) => key)
 );
 
 // Wrap isValidModel with passthrough providers

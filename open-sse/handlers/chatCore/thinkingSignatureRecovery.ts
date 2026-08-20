@@ -69,9 +69,7 @@ export async function recoverAnthropicThinkingSignature(args: {
       return args.execute(requestBody);
     },
     getError: async (result) => {
-      if (result === firstFailure) {
-        return { status: firstFailure.status, message: firstFailure.message };
-      }
+      if (result === firstFailure) return { status: result.status, message: result.message };
       if (result.response.ok) return null;
       const details = await args.parseError(result.response.clone());
       return { status: details.statusCode, message: details.message };

@@ -9,7 +9,6 @@ import type { ComboLogger, ResolvedComboTarget } from "./types.ts";
 
 export interface ContextRequirements {
   minContextWindow?: number;
-  maxContextWindow?: number;
   preferLargeContext?: boolean;
   contextFilterMode?: "strict" | "lenient";
 }
@@ -52,15 +51,10 @@ export function applyContextRequirements(
 ): ResolvedComboTarget[] {
   if (!requirements || targets.length === 0) return targets;
 
-  const {
-    minContextWindow,
-    maxContextWindow,
-    preferLargeContext,
-    contextFilterMode = "lenient",
-  } = requirements;
+  const { minContextWindow, preferLargeContext, contextFilterMode = "lenient" } = requirements;
 
   // No requirements specified
-  if (!minContextWindow && !maxContextWindow && !preferLargeContext) return targets;
+  if (!minContextWindow && !preferLargeContext) return targets;
 
   let filtered = targets;
 
@@ -106,34 +100,6 @@ export function applyContextRequirements(
       log.info(
         "COMBO",
         `Context requirements: filtered ${beforeFilterCount} → ${filtered.length} targets (minContextWindow: ${minContextWindow}, mode: ${contextFilterMode})`
-      );
-      log.debug?.(
-        "COMBO",
-        `Context requirements: kept models ${filtered.map((t) => t.modelStr).join(", ")}`
-      );
-    }
-  }
-
-  // Apply maxContextWindow filtering
-  if (maxContextWindow && maxContextWindow > 0) {
-    const beforeFilterCount = filtered.length;
-
-    filtered = filtered.filter((target) => {
-      const contextWindow = getTargetContextWindow(target);
-
-      // Unknown context limit handling
-      if (contextWindow === null) {
-        return contextFilterMode === "lenient";
-      }
-
-      // Known context limit - check threshold
-      return contextWindow <= maxContextWindow;
-    });
-
-    if (filtered.length < beforeFilterCount) {
-      log.info(
-        "COMBO",
-        `Context requirements: filtered ${beforeFilterCount} → ${filtered.length} targets (maxContextWindow: ${maxContextWindow}, mode: ${contextFilterMode})`
       );
       log.debug?.(
         "COMBO",

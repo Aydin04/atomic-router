@@ -95,7 +95,6 @@ const RequestLoggerV2 = forwardRef<RequestLoggerV2Handle, { initialSelectedId?: 
   (props, ref) => {
     const { initialSelectedId } = props as any;
     const t = useTranslations("requestLogger");
-    const tCache = useTranslations("cache");
     const { emailsVisible } = useEmailPrivacyStore();
 
     // Get translated status filters
@@ -544,7 +543,7 @@ const RequestLoggerV2 = forwardRef<RequestLoggerV2Handle, { initialSelectedId?: 
       try {
         const url = new URL(globalThis.location.href);
         url.searchParams.set("id", logEntry.id);
-        router.replace(url.pathname + url.search, { scroll: false });
+        router.replace(url.pathname + url.search);
       } catch (e) {
         // ignore navigation errors
       }
@@ -617,7 +616,7 @@ const RequestLoggerV2 = forwardRef<RequestLoggerV2Handle, { initialSelectedId?: 
         // remove id param when closing detail
         const url = new URL(globalThis.location.href);
         url.searchParams.delete("id");
-        router.replace(url.pathname + url.search, { scroll: false });
+        router.replace(url.pathname + url.search);
       } catch (e) {
         // ignore navigation errors
       }
@@ -894,7 +893,7 @@ const RequestLoggerV2 = forwardRef<RequestLoggerV2Handle, { initialSelectedId?: 
             </span>
             <input
               type="text"
-              placeholder={t("correlationId")}
+              placeholder="Correlation ID"
               value={correlationIdFilter}
               onChange={(e) => setCorrelationIdFilter(e.target.value)}
               className="w-full pl-9 pr-3 py-2 rounded-lg bg-bg-subtle border border-border text-sm text-text-primary font-mono placeholder:text-text-muted focus:outline-none focus:border-primary"
@@ -909,12 +908,12 @@ const RequestLoggerV2 = forwardRef<RequestLoggerV2Handle, { initialSelectedId?: 
                 ? "bg-violet-500/15 border-violet-500/30 text-violet-700 dark:text-violet-300"
                 : "bg-bg-subtle border-border text-text-muted hover:text-text-primary"
             }`}
-            title={groupedView ? t("group.showAllRows") : t("group.showLatestPerCorrelation")}
+            title={groupedView ? "Show all rows" : "Show latest per correlation ID"}
           >
             <span className="material-symbols-outlined text-[16px]">
               {groupedView ? "unfold_less" : "unfold_more"}
             </span>
-            {groupedView ? t("group.grouped") : t("statusFilters.all")}
+            {groupedView ? "Grouped" : "All"}
           </button>
 
           {/* Provider Dropdown */}
@@ -988,7 +987,7 @@ const RequestLoggerV2 = forwardRef<RequestLoggerV2Handle, { initialSelectedId?: 
             </span>
             {runningCount > 0 && (
               <span className="px-2 py-1 rounded bg-amber-500/10 text-amber-700 dark:text-amber-400 font-mono">
-                {runningCount} {t("running")}
+                {runningCount} running
               </span>
             )}
             <span className="px-2 py-1 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-mono">
@@ -1038,7 +1037,7 @@ const RequestLoggerV2 = forwardRef<RequestLoggerV2Handle, { initialSelectedId?: 
             <button
               onClick={() => updateRefreshIntervalSec((v) => v - 1)}
               className="w-6 h-6 flex items-center justify-center rounded hover:bg-bg-subtle text-text-muted hover:text-text-primary transition-colors text-sm font-bold"
-              title={t("interval.decrease")}
+              title="Decrease interval"
             >
               −
             </button>
@@ -1052,12 +1051,12 @@ const RequestLoggerV2 = forwardRef<RequestLoggerV2Handle, { initialSelectedId?: 
                 if (!Number.isNaN(v)) updateRefreshIntervalSec(v);
               }}
               className="w-12 text-center text-[11px] bg-transparent border border-border rounded px-1 py-0.5 text-text-primary [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-              title={t("interval.title")}
+              title="Auto-refresh interval in seconds"
             />
             <button
               onClick={() => updateRefreshIntervalSec((v) => v + 1)}
               className="w-6 h-6 flex items-center justify-center rounded hover:bg-bg-subtle text-text-muted hover:text-text-primary transition-colors text-sm font-bold"
-              title={t("interval.increase")}
+              title="Increase interval"
             >
               +
             </button>
@@ -1296,7 +1295,7 @@ const RequestLoggerV2 = forwardRef<RequestLoggerV2Handle, { initialSelectedId?: 
                             {isActive ? (
                               <span
                                 className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-amber-500/15 border border-amber-500/25"
-                                title={t("status.inProgress")}
+                                title="In progress"
                               >
                                 <span className="inline-block h-3 w-3 rounded-full border-2 border-amber-500 border-t-transparent animate-spin" />
                               </span>
@@ -1316,7 +1315,7 @@ const RequestLoggerV2 = forwardRef<RequestLoggerV2Handle, { initialSelectedId?: 
                                   log.status >= 400 && (
                                     <span
                                       className="text-emerald-500 text-[11px]"
-                                      title={t("status.recoveredByRetry")}
+                                      title="Recovered by retry"
                                     >
                                       ✓
                                     </span>
@@ -1324,7 +1323,7 @@ const RequestLoggerV2 = forwardRef<RequestLoggerV2Handle, { initialSelectedId?: 
                                 {log.isRetry && (
                                   <button
                                     className="inline-flex items-center text-amber-500 hover:text-amber-400 text-[11px] ml-0.5"
-                                    title={t("status.goToParent")}
+                                    title="Go to parent request"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       const parent = groupedLogs.find(
@@ -1363,25 +1362,25 @@ const RequestLoggerV2 = forwardRef<RequestLoggerV2Handle, { initialSelectedId?: 
                               {log.groupStatus === "healed" && !log.isRetry && (
                                 <span
                                   className="inline-flex items-center gap-0.5 px-1 py-0 rounded text-[8px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25"
-                                  title={t("status.healedTitle", { count: log.groupSize - 1 })}
+                                  title={`Failed, recovered after ${log.groupSize - 1} retry`}
                                 >
-                                  {t("status.healed")}
+                                  healed
                                 </span>
                               )}
                               {log.groupStatus === "failed" && !log.isRetry && (
                                 <span
                                   className="inline-flex items-center gap-0.5 px-1 py-0 rounded text-[8px] font-bold bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/25"
-                                  title={t("status.failedTitle", { count: log.groupSize })}
+                                  title={`All ${log.groupSize} attempts failed`}
                                 >
-                                  {t("status.failed")}
+                                  failed
                                 </span>
                               )}
                               {log.modelPinned && (
                                 <span
                                   className="inline-flex items-center gap-0.5 px-1 py-0 rounded text-[8px] font-bold bg-violet-500/15 text-violet-600 dark:text-violet-400 border border-violet-500/25"
-                                  title={t("status.pinnedTitle")}
+                                  title="Model selected via context-cache session pinning"
                                 >
-                                  {t("status.pinned")}
+                                  pinned
                                 </span>
                               )}
                             </div>
@@ -1390,7 +1389,7 @@ const RequestLoggerV2 = forwardRef<RequestLoggerV2Handle, { initialSelectedId?: 
                                 className="text-[9px] text-text-muted font-normal truncate max-w-[120px]"
                                 title={log.correlationId}
                               >
-                                {log.correlationId.slice(0, 12)}… · {log.groupSize} {t("attempts")}
+                                {log.correlationId.slice(0, 12)}… · {log.groupSize} attempts
                               </div>
                             )}
                             {log.correlationId && !log.isRetry && log.groupSize <= 1 && (
@@ -1515,30 +1514,6 @@ const RequestLoggerV2 = forwardRef<RequestLoggerV2Handle, { initialSelectedId?: 
                                 <span className="text-emerald-700 dark:text-emerald-400">
                                   {log.tokens?.out?.toLocaleString() || 0}
                                 </span>
-                                {log.tokens?.cacheRead != null && log.tokens.cacheRead > 0 && (
-                                  <>
-                                    <span className="mx-1 text-border">|</span>
-                                    <span className="text-text-muted">CR:</span>{" "}
-                                    <span
-                                      className="text-sky-700 dark:text-sky-400"
-                                      title={tCache("cachedTokensCol")}
-                                    >
-                                      {log.tokens.cacheRead.toLocaleString()}
-                                    </span>
-                                  </>
-                                )}
-                                {log.tokens?.cacheWrite != null && log.tokens.cacheWrite > 0 && (
-                                  <>
-                                    <span className="mx-1 text-border">|</span>
-                                    <span className="text-text-muted">CW:</span>{" "}
-                                    <span
-                                      className="text-amber-700 dark:text-amber-400"
-                                      title={tCache("cacheCreation")}
-                                    >
-                                      {log.tokens.cacheWrite.toLocaleString()}
-                                    </span>
-                                  </>
-                                )}
                                 {log.tokens?.compressed != null && log.tokens.compressed > 0 && (
                                   <>
                                     <span className="mx-1 text-border">|</span>

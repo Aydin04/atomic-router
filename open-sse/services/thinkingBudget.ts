@@ -1,23 +1,14 @@
 /**
  * Thinking Budget Control — Phase 2
  *
- * Proxy-level control of **client thinking/reasoning request fields**
- * (`reasoning`, `reasoning_effort`, Claude `thinking`, Gemini thinking_config).
- *
- * Modes (see Dashboard → Settings → AI → Thinking Budget):
- * - passthrough: leave client fields unchanged (required for Codex visible thinking)
- * - auto: STRIP all thinking/reasoning fields before upstream (not “auto-show thinking”)
- * - custom: force a fixed token budget on every request
- * - adaptive: scale budget from a base effort by request complexity
- *
- * Independent of compression, prompt cache, combo routing, and API-key token limits.
- * Does **not** decrypt OpenAI/Codex `encrypted_content` reasoning blobs.
+ * Provides proxy-level control over AI thinking/reasoning budgets.
+ * Modes: auto, passthrough, custom, adaptive
  */
 
 // Thinking budget modes
 export const ThinkingMode = {
-  AUTO: "auto", // Strip all client thinking/reasoning fields (provider invents defaults)
-  PASSTHROUGH: "passthrough", // No changes — client fully controls thinking
+  AUTO: "auto", // Let provider decide (remove client's budget)
+  PASSTHROUGH: "passthrough", // No changes (current behavior)
   CUSTOM: "custom", // Set fixed budget
   ADAPTIVE: "adaptive", // Scale based on request complexity
 };
@@ -256,9 +247,7 @@ export function applyThinkingBudget(
 }
 
 /**
- * AUTO mode: strip all thinking/reasoning configuration from the request body.
- * Upstream then runs without client-requested effort/summary — this can hide
- * thinking panels in Codex/Desktop and is the opposite of “show thinking”.
+ * AUTO mode: strip all thinking configuration, let provider decide
  */
 function stripThinkingConfig(body: unknown) {
   const result: JsonRecord = { ...toRecord(body) };

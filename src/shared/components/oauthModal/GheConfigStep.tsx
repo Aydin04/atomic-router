@@ -1,6 +1,5 @@
 "use client";
 
-import { useTranslations } from "next-intl";
 import Button from "@/shared/components/Button";
 import Input from "@/shared/components/Input";
 
@@ -21,26 +20,23 @@ export default function GheConfigStep({
   setError,
   startOAuthFlow,
 }: GheConfigStepProps) {
-  const t = useTranslations("oauthModal");
-
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm text-text-muted">
-        {t.rich("gheDescription", {
-          code: (chunks) => <code className="font-mono">{chunks}</code>,
-        })}
+        Enter the base URL of your GitHub Enterprise instance (e.g.{" "}
+        <code className="font-mono">https://ghe.yourcompany.com</code>).
       </p>
       <Input
         value={gheUrl}
         onChange={(e) => setGheUrl(e.target.value)}
-        placeholder={t("gheUrlPlaceholder")}
-        label={t("gheUrlLabel")}
+        placeholder="https://ghe.yourcompany.com"
+        label="GitHub Enterprise URL"
         type="url"
       />
       <Button
         onClick={() => {
           if (!gheUrl.trim()) {
-            setError(t("gheUrlRequired"));
+            setError("GitHub Enterprise URL is required");
             return;
           }
           startOAuthFlow();
@@ -48,7 +44,7 @@ export default function GheConfigStep({
         fullWidth
         disabled={!gheUrl.trim()}
       >
-        {t("connect")}
+        Connect
       </Button>
       {error && <p className="text-sm text-red-500">{error}</p>}
     </div>

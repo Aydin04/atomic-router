@@ -20,8 +20,8 @@ type LoggerLike = { debug?: (...args: unknown[]) => void } | null | undefined;
 type CacheBody = {
   messages?: unknown;
   input?: unknown;
-  temperature?: number;
-  top_p?: number;
+  temperature?: unknown;
+  top_p?: unknown;
 };
 
 type UsageLike = { prompt_tokens?: number; completion_tokens?: number } | null | undefined;
@@ -47,7 +47,7 @@ export function storeSemanticCacheResponse(
     headers: unknown;
     translatedResponse: unknown;
     model: string;
-    apiKeyId?: string;
+    apiKeyId?: string | number;
     usage?: UsageLike;
     log?: LoggerLike;
   },

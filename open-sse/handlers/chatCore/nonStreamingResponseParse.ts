@@ -28,16 +28,10 @@ type LoggerLike =
   | null
   | undefined;
 
-export type JsonRecord = Record<string, unknown>;
-
-export function isJsonRecord(value: unknown): value is JsonRecord {
-  return !!value && typeof value === "object" && !Array.isArray(value);
-}
-
 export type NonStreamingParseResult =
   | {
       kind: "ok";
-      responseBody: JsonRecord;
+      responseBody: unknown;
       responsePayloadFormat: string;
       looksLikeSSE: boolean;
       normalizedProviderPayload: unknown;
@@ -119,16 +113,7 @@ export async function parseNonStreamingResponseBody(opts: {
   }
 
   try {
-    const responseBody: unknown = rawBody ? JSON.parse(rawBody) : {};
-    if (!isJsonRecord(responseBody)) {
-      return {
-        kind: "invalid_json",
-        message: "Invalid JSON response from provider",
-        detailedError: "Invalid JSON response from provider: expected an object payload",
-        looksLikeSSE: false,
-        normalizedProviderPayload,
-      };
-    }
+    const responseBody = rawBody ? JSON.parse(rawBody) : {};
     return {
       kind: "ok",
       responseBody,

@@ -40,12 +40,7 @@ export async function handleResponsesCore({
   const customToolNames = collectResponsesCustomToolNames(body?.tools, inputItems);
 
   // Convert Responses API format to Chat Completions format
-  const convertedBody = convertResponsesApiFormat(
-    body,
-    credentials,
-    modelInfo?.provider,
-    modelInfo?.model
-  );
+  const convertedBody = convertResponsesApiFormat(body, credentials, modelInfo?.provider);
 
   // Ensure stream is enabled
   convertedBody.stream = true;
@@ -63,7 +58,6 @@ export async function handleResponsesCore({
     connectionId,
     userAgent: null,
     comboName: null,
-    onStreamFailure: null,
   });
 
   // handleChatCore's union includes a bare Response (early returns that never

@@ -50,8 +50,6 @@ export interface WebFetchResult {
 
 export interface WebFetchCredentials {
   apiKey?: string;
-  baseUrl?: string;
-  providerSpecificData?: Record<string, unknown>;
 }
 
 const WEB_FETCH_PROVIDERS = ["firecrawl", "jina-reader", "tavily-search", "tinyfish"] as const;

@@ -22,7 +22,6 @@ interface Combo {
 
 export default function ModelRoutingSection({ combos: externalCombos }: { combos?: Combo[] } = {}) {
   const t = useTranslations("settings");
-  const tCommon = useTranslations("common");
   const [mappings, setMappings] = useState<ModelMapping[]>([]);
   const [internalCombos, setInternalCombos] = useState<Combo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -251,7 +250,7 @@ export default function ModelRoutingSection({ combos: externalCombos }: { combos
               <input
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder={t("modelRoutingDescriptionPlaceholder")}
+                placeholder="Route Opus models to frontier combo"
                 className="w-full mt-0.5 px-2.5 py-1.5 text-xs rounded-lg border border-black/10 dark:border-white/10
                            bg-white dark:bg-black/20 focus:outline-none focus:ring-1 focus:ring-primary"
               />
@@ -329,7 +328,7 @@ export default function ModelRoutingSection({ combos: externalCombos }: { combos
                 <button
                   onClick={() => handleEdit(m)}
                   className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-                  title={tCommon("edit")}
+                  title="Edit"
                 >
                   <span className="material-symbols-outlined text-[14px] text-text-muted">
                     edit
@@ -338,7 +337,7 @@ export default function ModelRoutingSection({ combos: externalCombos }: { combos
                 <button
                   onClick={() => handleDelete(m.id)}
                   className="p-1 rounded hover:bg-red-500/10 transition-colors"
-                  title={tCommon("delete")}
+                  title="Delete"
                 >
                   <span className="material-symbols-outlined text-[14px] text-red-500">delete</span>
                 </button>

@@ -271,7 +271,6 @@ function stripInternalBodyFields(body: unknown): unknown {
   const record = body as Record<string, unknown>;
   delete record._claudeCodeRequiresLowercaseToolNames;
   delete record._nativeCodexPassthrough;
-  delete record._nativeXaiResponsesPassthrough;
   delete record._omnirouteResponsesStore;
   return body;
 }

@@ -88,7 +88,6 @@ import type {
   ComboRuntimeStep,
   HandleSingleModel,
   IsModelAvailable,
-  HiddenModelsByProvider,
   ResolvedComboTarget,
 } from "./types.ts";
 
@@ -112,9 +111,6 @@ export interface ResolveComboTargetPipelineDeps {
    * this leaf), so importing it directly would create an import cycle.
    */
   buildAutoCandidates: ResolveAutoStrategyDeps["buildAutoCandidates"];
-  hiddenModelsByProvider?: HiddenModelsByProvider;
-  /** Native Responses clients (for example Codex CLI/Desktop) manage compaction themselves. */
-  clientManagedResponsesContext?: boolean;
 }
 
 export interface ResolvedComboTargetPipeline {
@@ -163,12 +159,6 @@ async function isTargetSelectableForWeighted(
   ) {
     return false;
   }
-  if (target.provider && rawModel && target.connectionId) {
-    const { isAlibabaFreeTierModelRoutable } = await import("../alibabaFreeTier.ts");
-    if (!(await isAlibabaFreeTierModelRoutable(target.provider, target.connectionId, rawModel))) {
-      return false;
-    }
-  }
   return isModelAvailable ? await isModelAvailable(target.modelStr, target) : true;
 }
 
@@ -214,15 +204,10 @@ async function collectWeightedEligibility(
   expandedCombo: ComboLike,
   expandedAllCombos: ComboCollectionLike,
   resilienceSettings: ResilienceSettings,
-  isModelAvailable?: IsModelAvailable,
-  hiddenModelsByProvider?: HiddenModelsByProvider
+  isModelAvailable?: IsModelAvailable
 ): Promise<{ stepGroups: WeightedStepGroups; weightedEligibleKeys: Set<string> }> {
   const weightedEligibleKeys = new Set<string>();
-  const stepGroups = resolveWeightedStepGroups(
-    expandedCombo,
-    expandedAllCombos,
-    hiddenModelsByProvider
-  );
+  const stepGroups = resolveWeightedStepGroups(expandedCombo, expandedAllCombos);
   for (const group of stepGroups) {
     const availability = await Promise.all(
       group.targets.map((target) =>
@@ -275,8 +260,7 @@ async function resolveWeightedSelection(
       expandedCombo,
       expandedAllCombos,
       deps.resilienceSettings,
-      deps.isModelAvailable,
-      deps.hiddenModelsByProvider
+      deps.isModelAvailable
     );
     stepGroups = eligibility.stepGroups;
     weightedEligibleKeys = eligibility.weightedEligibleKeys;
@@ -367,8 +351,7 @@ function logTargetPoolSize(
  * auto routing (pipeline disabled, below token threshold, or dispatch failure).
  */
 async function dispatchSmartPipeline(
-  deps: ResolveComboTargetPipelineDeps,
-  availableModels: readonly string[]
+  deps: ResolveComboTargetPipelineDeps
 ): Promise<Response | null> {
   const { body, combo, strategy, config, settings, signal, log } = deps;
   if (strategy !== "auto") return null;
@@ -379,7 +362,6 @@ async function dispatchSmartPipeline(
     const pipelineRaw = await handlePipelineCombo({
       body,
       combo,
-      availableModels,
       handleChatCore: deps.handleSingleModelWithTimeout,
       log: {
         info: log.info,
@@ -454,7 +436,6 @@ async function orderByStrategy(
     body,
     log,
     apiKeyAllowedConnections: deps.apiKeyAllowedConnections,
-    sessionKey: deps.relayOptions?.sessionId,
   });
   return { orderedTargets, autoUsedExplicitRouter: false };
 }
@@ -498,8 +479,7 @@ async function applyContinuityFilters(
         initialOrderedTargets,
         // #7270: normalize both wire shapes (.messages / Responses-API .input) so the
         // stickiness key is derivable on the /v1/responses surface, not just Chat Completions.
-        normalizeStickinessMessages(body as { messages?: unknown; input?: unknown }),
-        combo.name
+        normalizeStickinessMessages(body as { messages?: unknown; input?: unknown })
       );
   let orderedTargets = sticky.targets;
   if (!cacheStrategyAffinityApplied) {
@@ -668,25 +648,10 @@ async function applyPromptCacheStage(
     promptCacheAffinityEnabled && resolvePromptCacheAffinityKey(body)
       ? await expandPromptCacheAffinityTargets(orderedTargets)
       : orderedTargets;
-
-  // Determine affinity scope: restrict to model-level for deterministic strategies
-  // to preserve operator-defined model order; keep global for cross-model
-  // strategies. Per #8370, lkgp/auto/cache-optimized explicitly support promoting
-  // a previously-successful model ahead of the declared order, so they must stay
-  // cross-model ("global") rather than be locked into a single model step.
-  const modelOrderPreservingStrategies = new Set<string>([
-    "priority",
-    "weighted",
-    "fill-first",
-    "quota-share",
-  ]);
-  const isDeterministicStrategy = modelOrderPreservingStrategies.has(strategy);
   const promptCacheAffinity = applyPromptCacheAffinity(
     promptCacheAffinityTargets,
     body,
-    promptCacheAffinityEnabled,
-    isDeterministicStrategy ? "model" : "global",
-    deps.relayOptions?.sessionId
+    promptCacheAffinityEnabled
   );
   if (!promptCacheAffinity.applied) return orderedTargets;
   const protectedOriginal =
@@ -722,25 +687,19 @@ export async function resolveComboTargetPipeline(
       : resolveComboTargets(
           expandedCombo,
           expandedAllCombos,
-          clampComboDepth(config.maxComboDepth),
-          deps.hiddenModelsByProvider
+          clampComboDepth(config.maxComboDepth)
         );
 
   orderedTargets = await applyRequestTagRouting(orderedTargets, body, log);
 
-  const overflow = getKnownContextOverflow(orderedTargets, body, {
-    clientManagedResponsesContext: deps.clientManagedResponsesContext,
-  });
+  const overflow = getKnownContextOverflow(orderedTargets, body);
   if (overflow) {
     return { earlyResponse: buildContextOverflowResponse(overflow, orderedTargets, log) };
   }
 
   logTargetPoolSize(strategy, allCombos, orderedTargets, stickyWeightedKey, log);
 
-  const pipelineResponse = await dispatchSmartPipeline(
-    deps,
-    orderedTargets.map((target) => target.modelStr)
-  );
+  const pipelineResponse = await dispatchSmartPipeline(deps);
   if (pipelineResponse) return { earlyResponse: pipelineResponse };
 
   const ordering = await orderByStrategy(deps, orderedTargets);

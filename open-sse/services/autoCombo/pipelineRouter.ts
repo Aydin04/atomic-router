@@ -54,7 +54,6 @@ const INTENT_TO_TASK: Record<IntentType, TaskType> = {
 export interface PipelineComboParams {
   body: Record<string, unknown>;
   combo: Record<string, unknown>;
-  availableModels?: readonly string[];
   handleChatCore: (body: Record<string, unknown>, modelStr?: string) => Promise<Response>;
   log: {
     info: (...args: unknown[]) => void;
@@ -86,7 +85,7 @@ export interface StageExecutorResult {
  */
 function resolveModelForTier(
   tier: FitnessTier,
-  availableModels: readonly string[],
+  availableModels: string[],
   taskType: string
 ): string {
   // Score each available model for this task type and tier
@@ -126,7 +125,7 @@ function createStageExecutor(
   body: Record<string, unknown>,
   handleChatCore: (body: Record<string, unknown>, modelStr?: string) => Promise<Response>,
   log: { info: (...args: unknown[]) => void; warn: (...args: unknown[]) => void },
-  availableModels: readonly string[],
+  availableModels: string[],
   taskType: string
 ): (args: StageExecutorArgs & { fitnessTier?: FitnessTier }) => Promise<StageExecutorResult> {
   return async ({
@@ -223,7 +222,6 @@ function estimateTokens(messages: Array<{ role: string; content: unknown }>): nu
 export async function handlePipelineCombo({
   body,
   combo,
-  availableModels: routedModels,
   handleChatCore,
   log,
   settings,
@@ -293,13 +291,7 @@ export async function handlePipelineCombo({
         })
         .filter((model): model is string => typeof model === "string" && model.length > 0)
     : [];
-  const availableModels =
-    routedModels === undefined
-      ? comboModels.length
-        ? comboModels
-        : ["deepseek-chat"]
-      : routedModels;
-  if (availableModels.length === 0) throw new Error("PIPELINE_NO_MODELS");
+  const availableModels = comboModels.length ? comboModels : ["deepseek-chat"];
 
   // ── Create stage executor ─────────────────────────────────────────────────
   const stageExecutor = createStageExecutor(body, handleChatCore, log, availableModels, taskType);

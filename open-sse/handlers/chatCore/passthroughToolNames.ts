@@ -1,11 +1,6 @@
 import { CLAUDE_OAUTH_TOOL_PREFIX } from "../../translator/request/openai-to-claude.ts";
-import { restoreOpenAIToolNames } from "../../translator/helpers/toolCallHelper.ts";
 
-type JsonRecord = Record<string, unknown>;
-
-export function buildClaudePassthroughToolNameMap(
-  body: Record<string, unknown> | null | undefined
-) {
+export function buildClaudePassthroughToolNameMap(body: Record<string, unknown> | null | undefined) {
   if (!body || !Array.isArray(body.tools)) return null;
 
   const toolNameMap = new Map<string, string>();
@@ -52,15 +47,11 @@ export function restoreClaudePassthroughToolNames(
 
 export function mergeResponseToolNameMap(
   baseToolNameMap: Map<string, string> | null,
-  transformedBody: unknown
+  transformedBody: Record<string, unknown> | null | undefined
 ) {
-  const transformedRecord =
-    transformedBody && typeof transformedBody === "object" && !Array.isArray(transformedBody)
-      ? (transformedBody as JsonRecord)
-      : null;
   const executorToolNameMap =
-    transformedRecord?._toolNameMap instanceof Map
-      ? (transformedRecord._toolNameMap as Map<string, string>)
+    transformedBody && transformedBody._toolNameMap instanceof Map
+      ? (transformedBody._toolNameMap as Map<string, string>)
       : null;
 
   if (!executorToolNameMap?.size) return baseToolNameMap;
@@ -71,31 +62,4 @@ export function mergeResponseToolNameMap(
     merged.set(toolName, originalName);
   }
   return merged;
-}
-
-export function restoreNonStreamingToolNames(
-  responseBody: JsonRecord,
-  baseToolNameMap: Map<string, string> | null,
-  transformedBody: unknown,
-  restoreClaudeNames: boolean
-): [JsonRecord, Map<string, string> | null] {
-  const responseToolNameMap = mergeResponseToolNameMap(baseToolNameMap, transformedBody);
-  const restoredBody = restoreClaudeNames
-    ? restoreClaudePassthroughToolNames(responseBody, responseToolNameMap)
-    : responseBody;
-  restoreOpenAIToolNames(restoredBody, responseToolNameMap);
-  return [restoredBody, responseToolNameMap];
-}
-
-export function normalizeOpenAIToolFinishReasons(responseBody: unknown): void {
-  const response = responseBody as {
-    choices?: Array<JsonRecord & { message?: { tool_calls?: unknown[] } }>;
-  } | null;
-  if (!response?.choices) return;
-
-  for (const choice of response.choices) {
-    if (choice.message?.tool_calls?.length > 0 && choice.finish_reason !== "tool_calls") {
-      choice.finish_reason = "tool_calls";
-    }
-  }
 }

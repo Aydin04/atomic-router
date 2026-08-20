@@ -15,7 +15,6 @@
 import { splitClaudeEffortSuffix } from "../../config/providerModels.ts";
 import { isClaudeCodeCompatibleProvider } from "../../services/claudeCodeCompatible.ts";
 import { FORMATS } from "../../translator/formats.ts";
-import { isKnownClaudeEffortBaseModel } from "../../utils/claudeEffortVariants.ts";
 
 /**
  * True when the client already supplied an explicit reasoning effort (top-level reasoning_effort,
@@ -41,10 +40,12 @@ export function applyClaudeEffortVariant(opts: {
   let effectiveModel = opts.effectiveModel;
   let log: string | null = null;
 
-  if (typeof effectiveModel === "string") {
+  if (
+    (provider === "claude" || isClaudeCodeCompatibleProvider(provider)) &&
+    typeof effectiveModel === "string"
+  ) {
     const { baseModel, effort } = splitClaudeEffortSuffix(effectiveModel);
-    const isDirectClaudeLane = provider === "claude" || isClaudeCodeCompatibleProvider(provider);
-    if (effort && (isDirectClaudeLane || isKnownClaudeEffortBaseModel(baseModel))) {
+    if (effort) {
       effectiveModel = baseModel;
       if (body && typeof body === "object" && !Array.isArray(body)) {
         const claudeBody = body as Record<string, unknown>;

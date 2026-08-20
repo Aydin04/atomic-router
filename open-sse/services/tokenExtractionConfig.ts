@@ -230,8 +230,9 @@ const RAW_CONFIGS: TokenExtractionConfig[] = [
     "Microsoft Copilot",
     "https://copilot.microsoft.com/",
     "https://copilot.microsoft.com",
-    [{ type: "header", name: "Authorization" }],
-    "Log in with your Microsoft account at copilot.microsoft.com. The bearer access token will be extracted from an authenticated request."
+    [{ type: "cookie", name: "RPSCAuth", domain: ".microsoft.com" }],
+    "Log in with your Microsoft account at copilot.microsoft.com. The session auth cookie will be extracted.",
+    { cookieDomain: ".microsoft.com" }
   ),
 
   // ── DuckDuckGo Web ────────────────────────────────────────
@@ -380,11 +381,12 @@ const RAW_CONFIGS: TokenExtractionConfig[] = [
   // ── Z.ai Web (#4056) ────────────────────────────────────────
   config(
     "zai-web",
-    "Z.ai Web",
+    "Z.ai Web (Free)",
     "https://chat.z.ai/",
     "https://chat.z.ai",
-    [{ type: "localStorage", key: "token" }],
-    'Log in to Z.ai at chat.z.ai. OmniRoute extracts the Local Storage value named "token"; chat CAPTCHA is handled by the browser transport.'
+    [{ type: "cookie", name: "token", domain: ".z.ai" }],
+    "Log in to Z.ai at chat.z.ai. The session token will be extracted.",
+    { cookieDomain: ".z.ai" }
   ),
 ];
 

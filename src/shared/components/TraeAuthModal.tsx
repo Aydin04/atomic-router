@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useTranslations } from "next-intl";
 import Modal from "./Modal";
 import Button from "./Button";
 import Input from "./Input";
@@ -86,7 +85,6 @@ export default function TraeAuthModal({
   onClose,
   reauthConnection: _,
 }: TraeAuthModalProps) {
-  const t = useTranslations("traeAuthModal");
   const [accessToken, setAccessToken] = useState("");
   const [webId, setWebId] = useState("");
   const [bizUserId, setBizUserId] = useState("");
@@ -134,12 +132,12 @@ export default function TraeAuthModal({
         onSuccess?.();
         onClose();
       } else {
-        setError(m.error || t("errorAuthorizationFailed"));
+        setError(m.error || "Authorization failed");
       }
     };
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
-  }, [isOpen, onSuccess, onClose, t]);
+  }, [isOpen, onSuccess, onClose]);
 
   const handleAuthorizeWithBrowser = () => {
     setError(null);
@@ -158,7 +156,7 @@ export default function TraeAuthModal({
     const w = window.open(authUrl, "trae-oauth", "width=520,height=720");
     if (!w) {
       setAuthorizing(false);
-      setError(t("errorPopupBlocked"));
+      setError("Popup blocked — allow popups for this site, or paste the token manually below.");
       return;
     }
     popupRef.current = w;
@@ -167,7 +165,7 @@ export default function TraeAuthModal({
       if (w.closed) {
         clearInterval(poll);
         setAuthorizing((prev) => {
-          if (prev) setError(t("errorPopupClosed"));
+          if (prev) setError("Authorization window was closed before completing.");
           return false;
         });
       }
@@ -176,7 +174,7 @@ export default function TraeAuthModal({
 
   const handleImportToken = async () => {
     if (!accessToken.trim()) {
-      setError(t("errorAccessTokenRequired"));
+      setError("Access token is required.");
       return;
     }
     setImporting(true);
@@ -198,9 +196,7 @@ export default function TraeAuthModal({
       const data = await res.json();
       if (!res.ok) {
         throw new Error(
-          typeof data.error === "string"
-            ? data.error
-            : data.error?.message || t("errorImportFailed")
+          typeof data.error === "string" ? data.error : data.error?.message || "Import failed"
         );
       }
       onSuccess?.();
@@ -213,54 +209,53 @@ export default function TraeAuthModal({
   };
 
   return (
-    <Modal isOpen={isOpen} title={t("title")} onClose={onClose}>
+    <Modal isOpen={isOpen} title="Connect Trae SOLO" onClose={onClose}>
       <div className="flex flex-col gap-4">
         {/* Primary path: browser-based OAuth via trae.ai/authorization */}
         <div className="bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-lg border border-emerald-200 dark:border-emerald-800">
           <p className="text-sm text-emerald-900 dark:text-emerald-200 mb-2">
-            {t.rich("authorizeDescription", {
-              code: (chunks) => <span className="font-mono">{chunks}</span>,
-            })}
+            Authorize via <span className="font-mono">trae.ai</span> in a popup. The popup will
+            close itself once the token has been imported.
           </p>
           <p className="text-xs text-emerald-800 dark:text-emerald-300 mb-3">
-            {t.rich("authorizeImportant", {
-              strong: (chunks) => <strong>{chunks}</strong>,
-              code: (chunks) => <span className="font-mono">{chunks}</span>,
-              em: (chunks) => <em>{chunks}</em>,
-            })}
+            <strong>Important:</strong> you must be logged in to{" "}
+            <span className="font-mono">trae.ai</span> in <em>this</em> browser first. The authorize
+            page only confirms an existing session — it cannot sign you in. If you see &quot;Login
+            Failed&quot;, click &quot;Open solo.trae.ai&quot;, sign in, then return here.
           </p>
           <div className="flex gap-2">
             <Button onClick={handleAuthorizeWithBrowser} disabled={authorizing} fullWidth>
-              {authorizing ? t("waitingForAuthorization") : t("authorizeWithBrowser")}
+              {authorizing ? "Waiting for trae.ai…" : "Authorize with Browser"}
             </Button>
             <Button
               onClick={() => window.open("https://solo.trae.ai/", "_blank", "noopener,noreferrer")}
               variant="ghost"
               fullWidth
             >
-              {t("openSoloTrae")}
+              Open solo.trae.ai
             </Button>
           </div>
         </div>
 
         <div className="flex items-center gap-3 text-xs text-text-muted">
           <span className="flex-1 border-t border-border" />
-          {t("orPasteManually")}
+          or paste a token manually
           <span className="flex-1 border-t border-border" />
         </div>
 
         <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
           <p className="text-sm text-blue-800 dark:text-blue-200">
-            {t.rich("manualInstructions", {
-              code: (chunks) => <span className="font-mono">{chunks}</span>,
-              tokenPlaceholder: "<token>",
-            })}
+            Sign in to <span className="font-mono">solo.trae.ai</span>, open DevTools → Network,
+            send any chat message, and copy the JWT from the{" "}
+            <span className="font-mono">Authorization: Cloud-IDE-JWT &lt;token&gt;</span> request
+            header. JWT lifetime is ~14 days. Optional identity fields come from{" "}
+            <span className="font-mono">common_params</span> in the same request body.
           </p>
         </div>
 
         <div>
           <label className="block text-sm font-medium mb-2">
-            {t("accessTokenLabel")} <span className="text-red-500">*</span>
+            Access Token (Cloud-IDE-JWT) <span className="text-red-500">*</span>
           </label>
           <textarea
             value={accessToken}
@@ -274,7 +269,7 @@ export default function TraeAuthModal({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div>
             <label className="block text-sm font-medium mb-1">
-              {t("webId")} <span className="text-text-muted text-xs">{t("optional")}</span>
+              Web ID <span className="text-text-muted text-xs">optional</span>
             </label>
             <Input
               value={webId}
@@ -285,7 +280,7 @@ export default function TraeAuthModal({
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">
-              {t("bizUserId")} <span className="text-text-muted text-xs">{t("optional")}</span>
+              Biz User ID <span className="text-text-muted text-xs">optional</span>
             </label>
             <Input
               value={bizUserId}
@@ -296,7 +291,7 @@ export default function TraeAuthModal({
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">
-              {t("userUniqueId")} <span className="text-text-muted text-xs">{t("optional")}</span>
+              User Unique ID <span className="text-text-muted text-xs">optional</span>
             </label>
             <Input
               value={userUniqueId}
@@ -306,15 +301,15 @@ export default function TraeAuthModal({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">{t("scope")}</label>
+            <label className="block text-sm font-medium mb-1">Scope</label>
             <Input value={scope} onChange={(e) => setScope(e.target.value)} className="text-sm" />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">{t("tenant")}</label>
+            <label className="block text-sm font-medium mb-1">Tenant</label>
             <Input value={tenant} onChange={(e) => setTenant(e.target.value)} className="text-sm" />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">{t("region")}</label>
+            <label className="block text-sm font-medium mb-1">Region</label>
             <Input value={region} onChange={(e) => setRegion(e.target.value)} className="text-sm" />
           </div>
         </div>
@@ -327,10 +322,10 @@ export default function TraeAuthModal({
 
         <div className="flex gap-2">
           <Button onClick={handleImportToken} fullWidth disabled={importing || !accessToken.trim()}>
-            {importing ? t("importing") : t("importToken")}
+            {importing ? "Importing…" : "Import Token"}
           </Button>
           <Button onClick={onClose} variant="ghost" fullWidth>
-            {t("cancel")}
+            Cancel
           </Button>
         </div>
       </div>
