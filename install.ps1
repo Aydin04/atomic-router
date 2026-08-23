@@ -1,7 +1,7 @@
 # =================================================================
 #    ⚡ AtomicRouter Windows 1-Line Automated Installer
 #    Usage in PowerShell (Run as Administrator or Normal User):
-#    irm https://raw.githubusercontent.com/dianrestu/atomic-router/main/install.ps1 | iex
+#    irm https://raw.githubusercontent.com/Aydin04/atomic-router/main/install.ps1 | iex
 # =================================================================
 
 $ErrorActionPreference = "Stop"
@@ -13,7 +13,7 @@ Write-Host "================================================================" -F
 Write-Host ""
 
 $INSTALL_DIR = "$env:USERPROFILE\.atomic-router"
-$REPO = "dianrestu/atomic-router"
+$REPO = "Aydin04/atomic-router"
 $ZIP_URL = "https://github.com/$REPO/releases/latest/download/atomic-router-windows-x64.zip"
 $TEMP_ZIP = "$env:TEMP\atomic-router-windows-x64.zip"
 

