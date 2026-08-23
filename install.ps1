@@ -17,25 +17,41 @@ $REPO = "Aydin04/atomic-router"
 $ZIP_URL = "https://github.com/$REPO/releases/latest/download/atomic-router-windows-x64.zip"
 $TEMP_ZIP = "$env:TEMP\atomic-router-windows-x64.zip"
 
-# 1. Check Node.js
+# 1. Check & Auto-Install Portable Node.js if missing
 Write-Host "[1/4] Checking Node.js runtime..." -ForegroundColor Blue
+$hasNode = $false
 try {
     $nodeVer = & node -v 2>$null
     if ($nodeVer) {
         Write-Host "[✓] Node.js $nodeVer detected." -ForegroundColor Green
-    } else {
-        throw "Node.js not found"
+        $hasNode = $true
     }
-} catch {
-    Write-Host "[!] Node.js 20+ LTS is required. Attempting install via winget..." -ForegroundColor Yellow
-    try {
-        winget install OpenJS.NodeJS.LTS --accept-source-agreements --accept-package-agreements -e
-        $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-        Write-Host "[✓] Node.js installed successfully." -ForegroundColor Green
-    } catch {
-        Write-Host "[X] Please install Node.js 20+ from https://nodejs.org/ and run this installer again." -ForegroundColor Red
-        return
+} catch {}
+
+if (-not $hasNode) {
+    Write-Host "[!] Node.js not detected in PATH. Auto-downloading portable Node.js 22 LTS..." -ForegroundColor Yellow
+    $NODE_ZIP = "$env:TEMP\node-v22-win-x64.zip"
+    $NODE_URL = "https://nodejs.org/dist/v22.14.0/node-v22.14.0-win-x64.zip"
+    $NODE_DIR = "$env:USERPROFILE\.nodejs"
+    
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    Invoke-WebRequest -Uri $NODE_URL -OutFile $NODE_ZIP -UseBasicParsing
+    Expand-Archive -Path $NODE_ZIP -DestinationPath "$env:TEMP\node_extract" -Force
+    
+    if (!(Test-Path $NODE_DIR)) {
+        New-Item -ItemType Directory -Path $NODE_DIR -Force | Out-Null
     }
+    Copy-Item "$env:TEMP\node_extract\node-v22.14.0-win-x64\*" $NODE_DIR -Recurse -Force
+    Remove-Item $NODE_ZIP -Force -ErrorAction SilentlyContinue
+    Remove-Item "$env:TEMP\node_extract" -Recurse -Force -ErrorAction SilentlyContinue
+
+    # Add to persistent User PATH and current session
+    $oldPath = [System.Environment]::GetEnvironmentVariable("Path", "User")
+    if ($oldPath -notmatch [regex]::Escape($NODE_DIR)) {
+        [System.Environment]::SetEnvironmentVariable("Path", "$oldPath;$NODE_DIR", "User")
+    }
+    $env:Path = "$env:Path;$NODE_DIR"
+    Write-Host "[✓] Portable Node.js v22 installed to $NODE_DIR" -ForegroundColor Green
 }
 
 # 2. Create Destination Directory
@@ -77,7 +93,7 @@ if "%1"=="update" (
     powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/$REPO/main/install.ps1 | iex"
 ) else if "%1"=="start" (
     start http://localhost:20128/
-    cd /d "$INSTALL_DIR" && node server.js
+    cd /d "$INSTALL_DIR" && npm start
 ) else if "%1"=="status" (
     curl -s http://localhost:20128/api/health
 ) else (
@@ -89,6 +105,12 @@ if "%1"=="update" (
 "@
 Set-Content -Path $CLI_SCRIPT -Value $CLI_CONTENT
 
+# Add INSTALL_DIR to user PATH
+$userPath = [System.Environment]::GetEnvironmentVariable("Path", "User")
+if ($userPath -notmatch [regex]::Escape($INSTALL_DIR)) {
+    [System.Environment]::SetEnvironmentVariable("Path", "$userPath;$INSTALL_DIR", "User")
+}
+
 Write-Host ""
 Write-Host "================================================================" -ForegroundColor Green
 Write-Host "   🎉 AtomicRouter Successfully Installed!" -ForegroundColor Green
@@ -96,9 +118,5 @@ Write-Host "================================================================" -F
 Write-Host ""
 Write-Host "  🌐 Dashboard URL:    http://localhost:20128/" -ForegroundColor Cyan
 Write-Host "  📁 Installed to:     $INSTALL_DIR" -ForegroundColor Cyan
-Write-Host "  🔑 Default Password: CHANGEME" -ForegroundColor Cyan
+Write-Host "  🔑 Default Key:      sk-atomic-gateway-master" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "Starting AtomicRouter Gateway server..." -ForegroundColor Green
-Start-Process "http://localhost:20128/"
-Set-Location $INSTALL_DIR
-& node server.js
