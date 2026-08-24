@@ -11,15 +11,22 @@ on:
 permissions:
   contents: write
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   build:
+    name: Build Multi-Platform Release
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
+      - name: Expand Virtual Memory (Native 10GB Swap)
+        run: |
+          sudo swapoff -a || true
+          sudo rm -f /mnt/swapfile /swapfile
+          sudo fallocate -l 10G /mnt/swapfile || sudo dd if=/dev/zero of=/mnt/swapfile bs=1M count=10240
+          sudo chmod 600 /mnt/swapfile
+          sudo mkswap /mnt/swapfile
+          sudo swapon /mnt/swapfile
+          free -h
+
       - name: Checkout Code
         uses: actions/checkout@v4
 
@@ -32,13 +39,15 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update && sudo apt-get install -y zip
-          export NODE_OPTIONS="--max-old-space-size=6144"
+          export NODE_OPTIONS="--max-old-space-size=12288"
           npm install --no-audit --no-fund
 
       - name: Build Standalone Production Gateway
         run: |
           export NEXT_TELEMETRY_DISABLED=1
-          export NODE_OPTIONS="--max-old-space-size=6144"
+          export NODE_OPTIONS="--max-old-space-size=12288"
+          export OMNIROUTE_BUILD_MEMORY_MB="12288"
+          export OMNIROUTE_USE_TURBOPACK="1"
           if [ ! -f .env ]; then cp .env.example .env; fi
           npm run build
 
