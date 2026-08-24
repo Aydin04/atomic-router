@@ -31,7 +31,7 @@ try {
 if (-not $hasNode) {
     Write-Host "[!] Node.js not detected in PATH. Auto-downloading portable Node.js 22 LTS..." -ForegroundColor Yellow
     $NODE_ZIP = "$env:TEMP\node-v22-win-x64.zip"
-    $NODE_URL = "https://nodejs.org/dist/v22.14.0/node-v22.14.0-win-x64.zip"
+    $NODE_URL = "https://nodejs.org/dist/v22.22.2/node-v22.22.2-win-x64.zip"
     $NODE_DIR = "$env:USERPROFILE\.nodejs"
     
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -41,7 +41,7 @@ if (-not $hasNode) {
     if (!(Test-Path $NODE_DIR)) {
         New-Item -ItemType Directory -Path $NODE_DIR -Force | Out-Null
     }
-    Copy-Item "$env:TEMP\node_extract\node-v22.14.0-win-x64\*" $NODE_DIR -Recurse -Force
+    Copy-Item "$env:TEMP\node_extract\node-v22.22.2-win-x64\*" $NODE_DIR -Recurse -Force
     Remove-Item $NODE_ZIP -Force -ErrorAction SilentlyContinue
     Remove-Item "$env:TEMP\node_extract" -Recurse -Force -ErrorAction SilentlyContinue
 
