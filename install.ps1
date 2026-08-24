@@ -93,7 +93,7 @@ if "%1"=="update" (
     powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/$REPO/main/install.ps1 | iex"
 ) else if "%1"=="start" (
     start http://localhost:20128/
-    cd /d "$INSTALL_DIR" && npm start
+    cd /d "$INSTALL_DIR" && node server.js
 ) else if "%1"=="status" (
     curl -s http://localhost:20128/api/health
 ) else (
