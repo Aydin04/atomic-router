@@ -13,7 +13,13 @@ import {
 } from "@/lib/db/providerLimits";
 import { syncToCloud } from "@/lib/cloudSync";
 import { setQuotaCache } from "@/domain/quotaCache";
-import { buildClaudeExtraUsageConnectionUpdate } from "@/lib/providers/claudeExtraUsage";
+import {
+  buildClaudeExtraUsageConnectionUpdate,
+  CLAUDE_EXTRA_USAGE_ERROR_SOURCE,
+  isClaudeExtraUsageBlockEnabled,
+  isClaudeExtraUsageQueued,
+} from "@/lib/providers/claudeExtraUsage";
+import { isConnectionUnavailableToAuxiliaryActivity } from "@/lib/exclusiveLeaseIsolation";
 import { clearRecoveredProviderState } from "@/sse/services/auth";
 import { getMachineId } from "@/shared/utils/machine";
 import { USAGE_SUPPORTED_PROVIDERS } from "@/shared/constants/providers";
@@ -100,6 +106,8 @@ const PROVIDER_LIMITS_APIKEY_PROVIDERS = new Set([
   // Alibaba Coding Plan (console API key) + Qwen personal Token Plan (console cookie) — #9603
   "bailian-coding-plan",
   "qwen-cloud-token-plan",
+  // AgentRouter (New-API) console System Access Token + New-Api-User id (providerSpecificData)
+  "agentrouter",
 ]);
 const DEFAULT_PROVIDER_LIMITS_SYNC_INTERVAL_MINUTES = 70;
 const PROVIDER_LIMITS_AUTO_SYNC_SETTING_KEY = "provider_limits_auto_sync_last_run";
@@ -431,17 +439,84 @@ export function hasUsableQuota(usage: JsonRecord): boolean {
   return false;
 }
 
+// A window "still blocks" recovery when it governs quota and is either still
+// exhausted with a real reset that hasn't passed yet, or exhausted with no
+// parseable real reset at all (unknown-reset windows stay locked, matching
+// the pre-existing kimi-coding partial-refresh semantics).
+function windowStillExhaustedAfterRealReset(value: unknown, nowMs: number): boolean {
+  if (!isRecord(value)) return false;
+  if (value.unlimited === true) return false;
+  const remaining =
+    typeof value.remaining === "number"
+      ? value.remaining
+      : typeof value.remainingPercentage === "number"
+        ? value.remainingPercentage
+        : null;
+  if (remaining !== null && remaining > 0) return false;
+  if (value.resetAt == null) return true;
+  const resetMs = Date.parse(String(value.resetAt));
+  if (Number.isNaN(resetMs)) return true;
+  return resetMs > nowMs;
+}
+
 export async function maybeClearRecoveredQuotaState(
   connection: ProviderConnectionLike,
   usage: JsonRecord
 ): Promise<ProviderConnectionLike> {
   if (!hasUsableQuota(usage)) return connection;
   if (isTerminalStatusForQuotaRecovery(connection.testStatus)) return connection;
-  if (
-    connection.lastErrorType === "quota_exhausted" &&
+  if (connection.lastErrorType === "quota_exhausted") {
+    if (
+      connection.lastErrorSource === CLAUDE_EXTRA_USAGE_ERROR_SOURCE &&
+      isClaudeExtraUsageBlockEnabled(connection.provider, connection.providerSpecificData) &&
+      isClaudeExtraUsageQueued(usage)
+    ) {
+      // Claude's pay-as-you-go extra-usage block is orthogonal to the
+      // session/weekly quota windows checked below: the upstream can report a
+      // fully recovered quota window while extraUsage.queued is still true.
+      // Only syncClaudeExtraUsageStateIfNeeded (buildClaudeExtraUsageConnectionUpdate)
+      // owns clearing this specific state — the general window-recovery logic
+      // below must not release it just because some quota window looks fresh.
+      return connection;
+    }
+
+    const quotas = usage?.quotas;
+    if (isRecord(quotas)) {
+      // Honor the REAL per-window resetAt from the freshly fetched quota
+      // instead of the synthetic cooldown persisted at failure time (e.g.
+      // Claude's flat 1h SUBSCRIPTION_QUOTA_COOLDOWN_MS when no upstream
+      // reset was parseable). Only stay locked if some window that governs
+      // this connection's quota is still demonstrably exhausted.
+      const anyStillBlocking = Object.values(quotas).some((value) =>
+        windowStillExhaustedAfterRealReset(value, Date.now())
+      );
+      if (anyStillBlocking) return connection;
+    } else if (
+      connection.rateLimitedUntil &&
+      new Date(connection.rateLimitedUntil).getTime() > Date.now()
+    ) {
+      // No quota object at all (degraded/failed fetch shape) — fall back to
+      // the previous synthetic-cooldown guard.
+      return connection;
+    }
+  } else if (
     connection.rateLimitedUntil &&
     new Date(connection.rateLimitedUntil).getTime() > Date.now()
   ) {
+    // Universal fallback guard for every lastErrorType other than
+    // "quota_exhausted" (which gets the more precise per-window check above,
+    // and may legitimately release early once the REAL window has reset even
+    // while a synthetic rateLimitedUntil is still in the future). A future
+    // rateLimitedUntil is a hard statement made by the 429/error handler that
+    // persisted it (src/sse/services/auth.ts, src/app/api/providers/[id]/test/
+    // route.ts) — no quota poll finding *some* usable window elsewhere should
+    // be able to overrule it. Before this fix, ANY lastErrorType other than
+    // "quota_exhausted" skipped straight to hasTransientState/
+    // clearRecoveredProviderState() below with no rateLimitedUntil check at
+    // all, so a multi-day cooldown (observed: 146h, Z.AI weekly quota) got
+    // cleared on the very next quota sync a few minutes later — a
+    // self-restart/burn loop that kept burning real upstream calls against a
+    // known-exhausted connection (#11277).
     return connection;
   }
 
@@ -738,6 +813,9 @@ async function fetchLiveProviderLimitsWithOptions(
   connection: ProviderConnectionLike;
   usage: JsonRecord;
 }> {
+  if (await isConnectionUnavailableToAuxiliaryActivity(connectionId)) {
+    throw withStatus(new Error("Usage refresh deferred while an exclusive lease is active"), 409);
+  }
   let connection = (await getProviderConnectionById(
     connectionId
   )) as unknown as ProviderConnectionLike | null;
@@ -945,9 +1023,19 @@ export async function syncAllProviderLimits(
   errors: Record<string, string>;
 }> {
   const { source = "manual", concurrency = 5 } = options;
+  const connectionRows = (await getProviderConnections({
+    isActive: true,
+  })) as unknown as ProviderConnectionLike[];
   const connections = (
-    (await getProviderConnections({ isActive: true })) as unknown as ProviderConnectionLike[]
-  ).filter(isSupportedUsageConnection);
+    await Promise.all(
+      connectionRows.map(async (connection) => ({
+        connection,
+        blocked: await isConnectionUnavailableToAuxiliaryActivity(connection.id),
+      }))
+    )
+  )
+    .filter(({ connection, blocked }) => isSupportedUsageConnection(connection) && !blocked)
+    .map(({ connection }) => connection);
   const cacheEntries: Array<{ connectionId: string; entry: ProviderLimitsCacheEntry }> = [];
   const caches: Record<string, ProviderLimitsCacheEntry> = {};
   const errors: Record<string, string> = {};

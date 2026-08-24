@@ -19,6 +19,7 @@ import { getProviderDisplayLabel } from "@/shared/utils/providerDisplayLabel";
 import { useIsElectron, useOpenExternal } from "@/shared/hooks/useElectron";
 import { HomeProviderTopologySection } from "./HomeProviderTopologySection";
 import { shouldShowProviderTopologyOnHome } from "./homeAppearance";
+import HomeRecentRequests from "../home/HomeRecentRequests";
 
 type UpdateStep = {
   step: string;
@@ -140,27 +141,27 @@ export default function HomePageClient({ machineId }: HomePageClientProps) {
     if (platform === "darwin") {
       return {
         label: t("downloadDmg"),
-        url: `https://github.com/dianrestu/atomic-router/releases/download/v${cleanLatest}/OmniRoute-${cleanLatest}.dmg`,
+        url: `https://github.com/diegosouzapw/OmniRoute/releases/download/v${cleanLatest}/OmniRoute-${cleanLatest}.dmg`,
         desc: t("downloadDmgDescription", { version: versionInfo?.current || "" }),
       };
     }
     if (platform === "win32") {
       return {
         label: t("downloadExe"),
-        url: `https://github.com/dianrestu/atomic-router/releases/download/v${cleanLatest}/OmniRoute.Setup.${cleanLatest}.exe`,
+        url: `https://github.com/diegosouzapw/OmniRoute/releases/download/v${cleanLatest}/OmniRoute.Setup.${cleanLatest}.exe`,
         desc: t("downloadExeDescription", { version: versionInfo?.current || "" }),
       };
     }
     if (platform === "linux") {
       return {
         label: t("downloadAppImage"),
-        url: `https://github.com/dianrestu/atomic-router/releases/download/v${cleanLatest}/OmniRoute-${cleanLatest}.AppImage`,
+        url: `https://github.com/diegosouzapw/OmniRoute/releases/download/v${cleanLatest}/OmniRoute-${cleanLatest}.AppImage`,
         desc: t("downloadAppImageDescription", { version: versionInfo?.current || "" }),
       };
     }
     return {
       label: t("downloadUpdate"),
-      url: `https://github.com/dianrestu/atomic-router/releases/tag/v${cleanLatest}`,
+      url: `https://github.com/diegosouzapw/OmniRoute/releases/tag/v${cleanLatest}`,
       desc: t("downloadUpdateDescription", { version: versionInfo?.current || "" }),
     };
   }, [platform, t, versionInfo?.latest, versionInfo?.current]);
@@ -1012,7 +1013,7 @@ export default function HomePageClient({ machineId }: HomePageClientProps) {
                       variant="secondary"
                       onClick={() =>
                         openExternal(
-                          `https://github.com/dianrestu/atomic-router/releases/tag/v${versionInfo.latest}`
+                          `https://github.com/diegosouzapw/OmniRoute/releases/tag/v${versionInfo.latest}`
                         )
                       }
                       className="font-semibold text-xs py-1"
@@ -1126,12 +1127,15 @@ export default function HomePageClient({ machineId }: HomePageClientProps) {
       )}
 
       {showProviderTopologyOnHome && (
-        <HomeProviderTopologySection
-          providers={topologyProviders}
-          lastProvider={lastProvider}
-          errorProvider={errorProvider}
-          enabled={showProviderTopologyOnHome}
-        />
+        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-3">
+          <HomeProviderTopologySection
+            providers={topologyProviders}
+            lastProvider={lastProvider}
+            errorProvider={errorProvider}
+            enabled={showProviderTopologyOnHome}
+          />
+          <HomeRecentRequests enabled={showProviderTopologyOnHome} />
+        </div>
       )}
 
       {/* Provider Models Modal */}
