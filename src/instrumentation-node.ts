@@ -243,6 +243,11 @@ export async function scanComboModelNameCollisionsAtBoot(): Promise<void> {
 }
 
 export async function registerNodejs(): Promise<void> {
+  // If Next.js is currently in build/export phase, skip all runtime background tasks
+  if (process.env.NEXT_PHASE === "phase-production-build" || process.env.NEXT_PHASE === "phase-export") {
+    return;
+  }
+
   markServerStarting();
 
   // Rename the process title so OmniRoute is identifiable in ps/htop instead
