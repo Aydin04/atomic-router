@@ -13,24 +13,17 @@ import { createRequire } from "node:module";
 declare const require: NodeRequire | undefined;
 
 function esmRuntimeRequire(specifier: string): unknown {
-  return createRequire(import.meta.url)(specifier);
+  try {
+    return createRequire(import.meta.url)(specifier);
+  } catch {
+    return null;
+  }
 }
 
 export function runtimeRequire(specifier: string): unknown {
-  if (typeof require === "function") {
-    switch (specifier) {
-      case "better-sqlite3":
-        return require("better-sqlite3");
-      case "node:sqlite":
-        return require("node:sqlite");
-      case "bun:sqlite":
-        return require("bun:sqlite");
-      case "sql.js":
-        return require("sql.js");
-      case "sqlite-vec":
-        return require("sqlite-vec");
-    }
+  try {
+    return esmRuntimeRequire(specifier);
+  } catch {
+    return null;
   }
-
-  return esmRuntimeRequire(specifier);
 }
