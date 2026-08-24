@@ -11,9 +11,14 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -27,13 +32,13 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update && sudo apt-get install -y zip
-          export NODE_OPTIONS="--max-old-space-size=4096"
+          export NODE_OPTIONS="--max-old-space-size=6144"
           npm install --no-audit --no-fund
 
       - name: Build Standalone Production Gateway
         run: |
           export NEXT_TELEMETRY_DISABLED=1
-          export NODE_OPTIONS="--max-old-space-size=4096"
+          export NODE_OPTIONS="--max-old-space-size=6144"
           if [ ! -f .env ]; then cp .env.example .env; fi
           npm run build
 
@@ -90,7 +95,7 @@ jobs:
             
             ### 🚀 1-Line Quick Install on Linux / VPS:
             ```bash
-            curl -fsSL https://raw.githubusercontent.com/dianrestu/atomic-router/main/install.sh | bash
+            curl -fsSL https://raw.githubusercontent.com/Aydin04/atomic-router/main/install.sh | bash
             ```
             
             ### 🪟 Windows (No Build Required):
