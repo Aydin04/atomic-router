@@ -43,6 +43,7 @@ export OMNIROUTE_API_KEY="dsh-local-key"
 export HOME="$DATA_DIR"
 export TMPDIR="$DATA_DIR/tmp"
 export PATH="$MODDIR/bin:/system/bin:/system/xbin:$PATH"
+export LD_LIBRARY_PATH="$MODDIR/lib:$LD_LIBRARY_PATH"
 
 # Auto-configure CDP endpoint for Android Chrome
 # Chrome on Android listens on local abstract socket @chrome_devtools_remote

@@ -9,11 +9,10 @@ mkdir -p /data/adb/atomic-router-data
 
 set_perm_recursive $MODPATH 0 0 0755 0644
 set_perm $MODPATH/service.sh 0 0 0755
+set_perm_recursive $MODPATH/bin 0 0 0755 0755
+set_perm_recursive $MODPATH/lib 0 0 0755 0755
 
-if [ -f "$MODPATH/bin/node" ]; then
-    set_perm $MODPATH/bin/node 0 0 0755
-fi
-
+ui_print "- Embedded Node.js runtime included (Standalone)"
 ui_print "- RAM limit configured: 128MB"
 ui_print "- Web dashboard port: 20128"
 ui_print "- Installed successfully! Reboot to activate."

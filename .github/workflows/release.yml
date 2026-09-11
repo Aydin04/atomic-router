@@ -127,6 +127,34 @@ jobs:
           # Copy Magisk files
           cp -r magisk-module/* "$STAGE_MAGISK/"
           
+          # Bundle embedded standalone Node.js ARM64 runtime (zero-dependency, no Termux needed)
+          echo "Bundling embedded Node.js ARM64 runtime..."
+          mkdir -p "$STAGE_MAGISK/bin" "$STAGE_MAGISK/lib"
+          STAGE_NODE="/tmp/node-arm64-stage"
+          rm -rf "$STAGE_NODE"
+          mkdir -p "$STAGE_NODE"
+          (
+            cd "$STAGE_NODE"
+            BASE_TERMUX="https://grimler.se/termux/termux-main"
+            curl -sL "$BASE_TERMUX/pool/main/n/nodejs/nodejs_26.4.0-1_aarch64.deb" -o nodejs.deb
+            curl -sL "$BASE_TERMUX/pool/main/libc/libc++/libc++_29_aarch64.deb" -o libc++.deb
+            curl -sL "$BASE_TERMUX/pool/main/libf/libffi/libffi_3.8.0_aarch64.deb" -o libffi.deb
+            curl -sL "$BASE_TERMUX/pool/main/libi/libicu/libicu_78.3_aarch64.deb" -o libicu.deb
+            curl -sL "$BASE_TERMUX/pool/main/libs/libsqlite/libsqlite_3.53.4_aarch64.deb" -o libsqlite.deb
+            curl -sL "$BASE_TERMUX/pool/main/o/openssl/openssl_1:3.6.3_aarch64.deb" -o openssl.deb
+            curl -sL "$BASE_TERMUX/pool/main/c/c-ares/c-ares_1.34.8_aarch64.deb" -o c-ares.deb
+            curl -sL "$BASE_TERMUX/pool/main/z/zlib/zlib_1.3.2_aarch64.deb" -o zlib.deb
+            for deb in *.deb; do
+              ar x "$deb"
+              tar -xf data.tar.* 2>/dev/null || true
+              rm -f data.tar.* control.tar.* debian-binary "$deb"
+            done
+            cp -r data/data/com.termux/files/usr/bin/node "$STAGE_MAGISK/bin/" 2>/dev/null || true
+            cp -P data/data/com.termux/files/usr/lib/lib* "$STAGE_MAGISK/lib/" 2>/dev/null || true
+          )
+          rm -rf "$STAGE_NODE"
+          chmod +x "$STAGE_MAGISK/bin/node" || true
+
           # Compute version code
           RAW_VER="${{ steps.pkg-ver.outputs.version }}"
           CLEAN_VER=$(echo "$RAW_VER" | tr -cd '0-9')
