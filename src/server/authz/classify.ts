@@ -1,7 +1,7 @@
 import {
-  PUBLIC_READONLY_API_ROUTE_PREFIXES,
   PUBLIC_READONLY_METHODS,
   isPublicApiRoute,
+  isPublicReadonlyCorsRoute,
 } from "../../shared/constants/publicApiRoutes";
 import type { ClassificationReason, RouteClassification } from "./types";
 
@@ -135,8 +135,7 @@ export function classifyRoute(rawPath: string, method: string = "GET"): RouteCla
 }
 
 function matchesReadonlyPublic(path: string, method: string): boolean {
-  if (!PUBLIC_READONLY_METHODS.has(String(method).toUpperCase())) return false;
-  return PUBLIC_READONLY_API_ROUTE_PREFIXES.some((p) => path.startsWith(p));
+  return isPublicReadonlyCorsRoute(path, method);
 }
 
 function isClassifiedAsPublic(path: string, method: string): boolean {
