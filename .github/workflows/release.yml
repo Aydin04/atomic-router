@@ -118,7 +118,71 @@ jobs:
           mv /tmp/atomic-router-pruned.tar.xz ./atomic-router-pruned.tar.xz
           rm -rf "$STAGE_PRUNED"
 
-          ls -lh atomic-router-*.tar.gz atomic-router-*.zip atomic-router-*.tar.xz
+          # 5. Magisk Module Package
+          echo "Packaging AtomicRouter Magisk Module..."
+          STAGE_MAGISK="/tmp/atomic-magisk"
+          rm -rf "$STAGE_MAGISK"
+          mkdir -p "$STAGE_MAGISK/atomic-router"
+          
+          # Copy Magisk files
+          cp -r magisk-module/* "$STAGE_MAGISK/"
+          
+          # Compute version code
+          RAW_VER="${{ steps.pkg-ver.outputs.version }}"
+          CLEAN_VER=$(echo "$RAW_VER" | tr -cd '0-9')
+          if [ -z "$CLEAN_VER" ]; then CLEAN_VER="1000"; fi
+          
+          # Update module.prop and update.json dynamically
+          cat << EOF > "$STAGE_MAGISK/module.prop"
+id=atomic_router
+name=AtomicRouter Magisk Module
+version=v${{ steps.pkg-ver.outputs.version }}
+versionCode=$CLEAN_VER
+author=Aydin04
+description=Run AtomicRouter background service on Android with low-RAM limits (~128MB). Accessible at http://127.0.0.1:20128
+updateJson=https://raw.githubusercontent.com/Aydin04/atomic-router/main/magisk-module/update.json
+EOF
+
+          cat << EOF > "$STAGE_MAGISK/update.json"
+{
+  "version": "v${{ steps.pkg-ver.outputs.version }}",
+  "versionCode": $CLEAN_VER,
+  "zipUrl": "https://github.com/Aydin04/atomic-router/releases/latest/download/atomic-router-magisk.zip",
+  "changelog": "https://raw.githubusercontent.com/Aydin04/atomic-router/main/magisk-module/changelog.md"
+}
+EOF
+          # Copy updated update.json back to repo so raw URL stays up to date
+          cp "$STAGE_MAGISK/update.json" magisk-module/update.json
+          cp "$STAGE_MAGISK/module.prop" magisk-module/module.prop
+
+          # Copy pruned standalone files into Magisk module
+          cp -r "$TARGET_DIR"/* "$STAGE_MAGISK/atomic-router/"
+          (
+            cd "$STAGE_MAGISK/atomic-router"
+            rm -rf docs tests CHANGELOG.md CONTRIBUTING.md CODE_OF_CONDUCT.md images changelog.d contrib docker examples .git promptfooconfig.yaml playwright.config.ts stryker.* vitest.* codecov.yml sonar-project.properties Makefile Dockerfile 2>/dev/null || true
+            find . -type f \( -name "*.dll" -o -name "*.dylib" -o -name "*.exe" \) -delete || true
+            find node_modules -type d \( -name "win32" -o -name "darwin" -o -name "ia32" \) -exec rm -rf {} + 2>/dev/null || true
+            rm -rf node_modules/promptfoo node_modules/@oven node_modules/bun node_modules/playwright node_modules/playwright-core node_modules/prettier node_modules/eslint node_modules/@eslint node_modules/vitest node_modules/c8 node_modules/knip 2>/dev/null || true
+            find . -type f \( -name "*.map" -o -name "*.d.ts" -o -name "*.flow" \) -delete || true
+            find .build -name "*.nft.json" -delete 2>/dev/null || true
+            rm -f node_modules/onnxruntime-node/bin/napi-v6/linux/x64/libonnxruntime_providers_cuda.so 2>/dev/null || true
+            rm -rf node_modules/typescript src 2>/dev/null || true
+            find node_modules/@tensorflow \( -name "*_test.js" -o -name "*.test.js" \) -delete 2>/dev/null || true
+          )
+          
+          # Create Magisk zip
+          (cd "$STAGE_MAGISK" && zip -r -9 /tmp/atomic-router-magisk.zip .)
+          mv /tmp/atomic-router-magisk.zip ./atomic-router-magisk.zip
+          rm -rf "$STAGE_MAGISK"
+
+          # Commit updated update.json to repo if changed
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add magisk-module/update.json magisk-module/module.prop || true
+          git commit -m "chore(magisk): update module version to v${{ steps.pkg-ver.outputs.version }}" || true
+          git push origin main || true
+
+          ls -lh atomic-router-*.tar.gz atomic-router-*.zip atomic-router-*.tar.xz atomic-router-magisk.zip
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -129,7 +193,13 @@ jobs:
           body: |
             ## ⚡ AtomicRouter v${{ steps.pkg-ver.outputs.version }} Multi-Platform Standalone Release
             
-            Ultra-Lightweight Universal AI Gateway & Smart Proxy (Linux, macOS, Windows, Android/Termux).
+            Ultra-Lightweight Universal AI Gateway & Smart Proxy (Linux, macOS, Windows, Android Magisk Module / Termux).
+            
+            ### 📱 Magisk / KernelSU / APatch Module:
+            - Download `atomic-router-magisk.zip` and flash in Magisk app / KernelSU!
+            - Runs in the background on boot with strict 128MB RAM limit.
+            - Web Dashboard: `http://127.0.0.1:20128/`
+            - Native updates supported via Magisk Manager!
             
             ### 🚀 1-Line Quick Install on Linux / VPS:
             ```bash
@@ -137,7 +207,7 @@ jobs:
             ```
             
             ### 📱 Android / Embedded / DSH Harness:
-            Download `atomic-router-pruned.tar.xz` (~80-100 MB ultra-compressed).
+            Download `atomic-router-pruned.tar.xz`.
             
             ### 🪟 Windows (No Build Required):
             1. Download `atomic-router-windows-x64.zip`
@@ -148,15 +218,11 @@ jobs:
             1. Download `atomic-router-macos-universal.tar.gz`
             2. Extract: `tar -xzf atomic-router-macos-universal.tar.gz`
             3. Run: `./start.sh` (Opens at `http://localhost:20128/`)
-            
-            ### ⚡ Update Command (For Existing VPS Installations):
-            ```bash
-            sudo atomic-router update
-            ```
           files: |
             atomic-router-linux-x64.tar.gz
             atomic-router-macos-universal.tar.gz
             atomic-router-windows-x64.zip
             atomic-router-pruned.tar.xz
+            atomic-router-magisk.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
