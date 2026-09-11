@@ -44,6 +44,14 @@ export HOME="$DATA_DIR"
 export TMPDIR="$DATA_DIR/tmp"
 export PATH="$MODDIR/bin:/system/bin:/system/xbin:$PATH"
 
+# Auto-configure CDP endpoint for Android Chrome
+# Chrome on Android listens on local abstract socket @chrome_devtools_remote
+# Forward tcp:9222 -> localabstract:chrome_devtools_remote if adb/socat available
+if which socat >/dev/null 2>&1; then
+    socat TCP-LISTEN:9222,fork,bind=127.0.0.1 ABSTRACT-CONNECT:chrome_devtools_remote &
+fi
+export CHROME_CDP_ENDPOINT="http://127.0.0.1:9222"
+
 # Run AtomicRouter with strict RAM limiter (--max-old-space-size=128)
 cd "$MODDIR/atomic-router" || exit 1
 
