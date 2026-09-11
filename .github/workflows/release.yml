@@ -133,24 +133,26 @@ jobs:
           if [ -z "$CLEAN_VER" ]; then CLEAN_VER="1000"; fi
           
           # Update module.prop and update.json dynamically
-          cat << EOF > "$STAGE_MAGISK/module.prop"
-id=atomic_router
-name=AtomicRouter Magisk Module
-version=v${{ steps.pkg-ver.outputs.version }}
-versionCode=$CLEAN_VER
-author=Aydin04
-description=Run AtomicRouter background service on Android with low-RAM limits (~128MB). Accessible at http://127.0.0.1:20128
-updateJson=https://raw.githubusercontent.com/Aydin04/atomic-router/main/magisk-module/update.json
-EOF
+          cat << 'EOF' > "$STAGE_MAGISK/module.prop"
+          id=atomic_router
+          name=AtomicRouter Magisk Module
+          author=Aydin04
+          description=Run AtomicRouter background service on Android with low-RAM limits (~128MB). Accessible at http://127.0.0.1:20128
+          updateJson=https://raw.githubusercontent.com/Aydin04/atomic-router/main/magisk-module/update.json
+          EOF
+          sed -i "s/^[ \t]*//" "$STAGE_MAGISK/module.prop"
+          echo "version=v${{ steps.pkg-ver.outputs.version }}" >> "$STAGE_MAGISK/module.prop"
+          echo "versionCode=$CLEAN_VER" >> "$STAGE_MAGISK/module.prop"
 
-          cat << EOF > "$STAGE_MAGISK/update.json"
-{
-  "version": "v${{ steps.pkg-ver.outputs.version }}",
-  "versionCode": $CLEAN_VER,
-  "zipUrl": "https://github.com/Aydin04/atomic-router/releases/latest/download/atomic-router-magisk.zip",
-  "changelog": "https://raw.githubusercontent.com/Aydin04/atomic-router/main/magisk-module/changelog.md"
-}
-EOF
+          cat << 'EOF' > "$STAGE_MAGISK/update.json"
+          {
+            "zipUrl": "https://github.com/Aydin04/atomic-router/releases/latest/download/atomic-router-magisk.zip",
+            "changelog": "https://raw.githubusercontent.com/Aydin04/atomic-router/main/magisk-module/changelog.md"
+          }
+          EOF
+          sed -i "s/^[ \t]*//" "$STAGE_MAGISK/update.json"
+          jq --arg v "v${{ steps.pkg-ver.outputs.version }}" --argjson vc "$CLEAN_VER" '.version = $v | .versionCode = $vc' "$STAGE_MAGISK/update.json" > /tmp/uj.json && mv /tmp/uj.json "$STAGE_MAGISK/update.json"
+          
           # Copy updated update.json back to repo so raw URL stays up to date
           cp "$STAGE_MAGISK/update.json" magisk-module/update.json
           cp "$STAGE_MAGISK/module.prop" magisk-module/module.prop
