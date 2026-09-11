@@ -166,10 +166,17 @@ jobs:
             find node_modules -type d \( -name "win32" -o -name "darwin" -o -name "ia32" \) -exec rm -rf {} + 2>/dev/null || true
             rm -rf node_modules/promptfoo node_modules/@oven node_modules/bun node_modules/playwright node_modules/playwright-core node_modules/prettier node_modules/eslint node_modules/@eslint node_modules/vitest node_modules/c8 node_modules/knip 2>/dev/null || true
             find . -type f \( -name "*.map" -o -name "*.d.ts" -o -name "*.flow" \) -delete || true
-            find .build -name "*.nft.json" -delete 2>/dev/null || true
-            rm -f node_modules/onnxruntime-node/bin/napi-v6/linux/x64/libonnxruntime_providers_cuda.so 2>/dev/null || true
-            rm -rf node_modules/typescript src 2>/dev/null || true
-            find node_modules/@tensorflow \( -name "*_test.js" -o -name "*.test.js" \) -delete 2>/dev/null || true
+            # Aggressively prune desktop AI engines, unused native binaries to hit ~100MB
+            rm -rf node_modules/@tensorflow node_modules/onnxruntime-node node_modules/@ngrok 2>/dev/null || true
+            rm -rf node_modules/wreq-js/rust/*darwin* node_modules/wreq-js/rust/*win32* 2>/dev/null || true
+            rm -rf .build/next/node_modules/wreq-js*/rust/*darwin* .build/next/node_modules/wreq-js*/rust/*win32* 2>/dev/null || true
+            rm -rf node_modules/better-sqlite3/prebuilds/*darwin* node_modules/better-sqlite3/prebuilds/*win32* 2>/dev/null || true
+            rm -rf .build/next/node_modules/better-sqlite3*/prebuilds/*darwin* .build/next/node_modules/better-sqlite3*/prebuilds/*win32* 2>/dev/null || true
+            rm -rf node_modules/koffi/build/*darwin* node_modules/koffi/build/*win32* 2>/dev/null || true
+            rm -rf node_modules/@img/sharp-libvips-darwin* node_modules/@img/sharp-libvips-win32* 2>/dev/null || true
+            rm -f node_modules/onnxruntime-web/dist/*.wasm 2>/dev/null || true
+            rm -f node_modules/@huggingface/transformers/dist/*.wasm 2>/dev/null || true
+            rm -f .build/next/node_modules/@huggingface/transformers*/dist/*.wasm 2>/dev/null || true
           )
           
           # Create Magisk zip
