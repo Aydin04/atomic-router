@@ -36,9 +36,15 @@ jobs:
           node-version: 22
           cache: 'npm'
 
+      - name: Get Package Version
+        id: pkg-ver
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
       - name: Install Dependencies
         run: |
-          sudo apt-get update && sudo apt-get install -y zip
+          sudo apt-get update && sudo apt-get install -y zip xz-utils
           export NODE_OPTIONS="--max-old-space-size=12288"
           npm install --no-audit --no-fund
 
@@ -89,23 +95,49 @@ jobs:
           (cd "$TARGET_DIR" && zip -r -q /tmp/atomic-router-windows-x64.zip .)
           mv /tmp/atomic-router-windows-x64.zip ./atomic-router-windows-x64.zip
 
-          ls -lh atomic-router-*.tar.gz atomic-router-*.zip
+          # 4. Mobile / Embedded Pruned Release (.tar.xz)
+          echo "Creating Pruned Mobile / Embedded Package..."
+          STAGE_PRUNED="/tmp/atomic-router-pruned"
+          rm -rf "$STAGE_PRUNED"
+          cp -r "$TARGET_DIR" "$STAGE_PRUNED"
+          (
+            cd "$STAGE_PRUNED"
+            # Remove non-runtime docs, tests, source maps, typescript types
+            rm -rf docs tests CHANGELOG.md CONTRIBUTING.md CODE_OF_CONDUCT.md images changelog.d contrib docker examples .git promptfooconfig.yaml playwright.config.ts stryker.* vitest.* codecov.yml sonar-project.properties Makefile Dockerfile 2>/dev/null || true
+            find . -type f \( -name "*.dll" -o -name "*.dylib" -o -name "*.exe" \) -delete || true
+            find node_modules -type d \( -name "win32" -o -name "darwin" -o -name "ia32" \) -exec rm -rf {} + 2>/dev/null || true
+            rm -rf node_modules/promptfoo node_modules/@oven node_modules/bun node_modules/playwright node_modules/playwright-core node_modules/prettier node_modules/eslint node_modules/@eslint node_modules/vitest node_modules/c8 node_modules/knip 2>/dev/null || true
+            find . -type f \( -name "*.map" -o -name "*.d.ts" -o -name "*.flow" \) -delete || true
+            # Remove redundant Next.js NFT trace metadata (.nft.json) & unneeded CUDA GPU binary
+            find .build -name "*.nft.json" -delete 2>/dev/null || true
+            rm -f node_modules/onnxruntime-node/bin/napi-v6/linux/x64/libonnxruntime_providers_cuda.so 2>/dev/null || true
+            rm -rf node_modules/typescript src 2>/dev/null || true
+            find node_modules/@tensorflow \( -name "*_test.js" -o -name "*.test.js" \) -delete 2>/dev/null || true
+            tar -cf - . | xz -z -9 -T0 > /tmp/atomic-router-pruned.tar.xz
+          )
+          mv /tmp/atomic-router-pruned.tar.xz ./atomic-router-pruned.tar.xz
+          rm -rf "$STAGE_PRUNED"
+
+          ls -lh atomic-router-*.tar.gz atomic-router-*.zip atomic-router-*.tar.xz
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: v3.8.50
-          name: "⚡ AtomicRouter v3.8.50 Multi-Platform Standalone Release"
+          tag_name: v${{ steps.pkg-ver.outputs.version }}
+          name: "⚡ AtomicRouter v${{ steps.pkg-ver.outputs.version }} Multi-Platform Standalone Release"
           body: |
-            ## ⚡ AtomicRouter v3.8.50 Multi-Platform Standalone Release
+            ## ⚡ AtomicRouter v${{ steps.pkg-ver.outputs.version }} Multi-Platform Standalone Release
             
-            Ultra-Lightweight Universal AI Gateway & Smart Proxy (Linux, macOS, Windows).
+            Ultra-Lightweight Universal AI Gateway & Smart Proxy (Linux, macOS, Windows, Android/Termux).
             
             ### 🚀 1-Line Quick Install on Linux / VPS:
             ```bash
             curl -fsSL https://raw.githubusercontent.com/Aydin04/atomic-router/main/install.sh | bash
             ```
+            
+            ### 📱 Android / Embedded / DSH Harness:
+            Download `atomic-router-pruned.tar.xz` (~80-100 MB ultra-compressed).
             
             ### 🪟 Windows (No Build Required):
             1. Download `atomic-router-windows-x64.zip`
@@ -125,5 +157,6 @@ jobs:
             atomic-router-linux-x64.tar.gz
             atomic-router-macos-universal.tar.gz
             atomic-router-windows-x64.zip
+            atomic-router-pruned.tar.xz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
