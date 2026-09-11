@@ -7,6 +7,15 @@ ui_print "****************************************"
 ui_print "- Installing AtomicRouter files..."
 mkdir -p /data/adb/atomic-router-data
 
+# Extract ultra-compressed tar.xz payload if present
+if [ -f "$MODPATH/atomic-router.tar.xz" ]; then
+    ui_print "- Extracting ultra-compressed package (tar.xz)..."
+    tar -xJf "$MODPATH/atomic-router.tar.xz" -C "$MODPATH/" 2>/dev/null || \
+    xz -dc "$MODPATH/atomic-router.tar.xz" | tar -xf - -C "$MODPATH/" 2>/dev/null || \
+    busybox tar -xJf "$MODPATH/atomic-router.tar.xz" -C "$MODPATH/"
+    rm -f "$MODPATH/atomic-router.tar.xz"
+fi
+
 set_perm_recursive $MODPATH 0 0 0755 0644
 set_perm $MODPATH/service.sh 0 0 0755
 set_perm_recursive $MODPATH/bin 0 0 0755 0755

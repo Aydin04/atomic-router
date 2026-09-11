@@ -185,10 +185,13 @@ jobs:
           cp "$STAGE_MAGISK/update.json" magisk-module/update.json
           cp "$STAGE_MAGISK/module.prop" magisk-module/module.prop
 
-          # Copy all standalone files including hidden folders (.build) into Magisk module
-          tar -C "$TARGET_DIR" -cf - . | tar -C "$STAGE_MAGISK/atomic-router/" -xf -
+          # Copy all standalone files including hidden folders (.build) into temporary folder
+          STAGE_APP="/tmp/atomic-app-stage"
+          rm -rf "$STAGE_APP"
+          mkdir -p "$STAGE_APP"
+          tar -C "$TARGET_DIR" -cf - . | tar -C "$STAGE_APP/" -xf -
           (
-            cd "$STAGE_MAGISK/atomic-router"
+            cd "$STAGE_APP"
             rm -rf docs tests CHANGELOG.md CONTRIBUTING.md CODE_OF_CONDUCT.md images changelog.d contrib docker examples .git promptfooconfig.yaml playwright.config.ts stryker.* vitest.* codecov.yml sonar-project.properties Makefile Dockerfile 2>/dev/null || true
             find . -type f \( -name "*.dll" -o -name "*.dylib" -o -name "*.exe" \) -delete || true
             find node_modules -type d \( -name "win32" -o -name "darwin" -o -name "ia32" \) -exec rm -rf {} + 2>/dev/null || true
@@ -205,9 +208,16 @@ jobs:
             rm -f node_modules/onnxruntime-web/dist/*.wasm 2>/dev/null || true
             rm -f node_modules/@huggingface/transformers/dist/*.wasm 2>/dev/null || true
             rm -f .build/next/node_modules/@huggingface/transformers*/dist/*.wasm 2>/dev/null || true
+            
+            # Ultra-compress with XZ Level 9 (Multi-threaded)
+            echo "Compressing atomic-router payload into atomic-router.tar.xz..."
+            mkdir -p atomic-router
+            find . -mindepth 1 -maxdepth 1 ! -name atomic-router -exec mv {} atomic-router/ \;
+            tar -cf - atomic-router | xz -z -9 -T0 > "$STAGE_MAGISK/atomic-router.tar.xz"
           )
+          rm -rf "$STAGE_APP"
           
-          # Create Magisk zip
+          # Create Magisk zip (only contains installer scripts, node bin/lib, and atomic-router.tar.xz)
           (cd "$STAGE_MAGISK" && zip -r -9 /tmp/atomic-router-magisk.zip .)
           mv /tmp/atomic-router-magisk.zip ./atomic-router-magisk.zip
           rm -rf "$STAGE_MAGISK"
@@ -215,7 +225,7 @@ jobs:
           # Commit updated update.json to repo if changed
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add magisk-module/update.json magisk-module/module.prop || true
+          git add magisk-module/update.json magisk-module/module.prop magisk-module/customize.sh || true
           git commit -m "chore(magisk): update module version to v${{ steps.pkg-ver.outputs.version }}" || true
           git push origin main || true
 
