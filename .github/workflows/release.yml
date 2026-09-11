@@ -185,8 +185,8 @@ jobs:
           cp "$STAGE_MAGISK/update.json" magisk-module/update.json
           cp "$STAGE_MAGISK/module.prop" magisk-module/module.prop
 
-          # Copy pruned standalone files into Magisk module
-          cp -r "$TARGET_DIR"/* "$STAGE_MAGISK/atomic-router/"
+          # Copy all standalone files including hidden folders (.build) into Magisk module
+          tar -C "$TARGET_DIR" -cf - . | tar -C "$STAGE_MAGISK/atomic-router/" -xf -
           (
             cd "$STAGE_MAGISK/atomic-router"
             rm -rf docs tests CHANGELOG.md CONTRIBUTING.md CODE_OF_CONDUCT.md images changelog.d contrib docker examples .git promptfooconfig.yaml playwright.config.ts stryker.* vitest.* codecov.yml sonar-project.properties Makefile Dockerfile 2>/dev/null || true
