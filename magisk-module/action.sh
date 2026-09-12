@@ -22,8 +22,8 @@ fi
 # Ensure standalone Control Center is alive on port 20129
 if [ -z "$CTRL_PID" ] || ! kill -0 "$CTRL_PID" 2>/dev/null; then
     echo "[+] Launching Control Center Web UI on port 20129..."
-    if [ -n "$NODE_BIN" ] && [ -f "$MODDIR/control-center.js" ]; then
-        DATA_DIR="$DATA_DIR" $NODE_BIN --max-old-space-size=32 "$MODDIR/control-center.js" >> "$DATA_DIR/service.log" 2>&1 &
+    if [ -n "$NODE_BIN" ] && [ -f "$MODDIR/control-center.cjs" ]; then
+        DATA_DIR="$DATA_DIR" $NODE_BIN --max-old-space-size=32 "$MODDIR/control-center.cjs" >> "$DATA_DIR/service.log" 2>&1 &
         echo $! > "$DATA_DIR/control_center.pid"
         sleep 1
     fi

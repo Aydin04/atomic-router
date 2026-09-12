@@ -7,6 +7,9 @@ const { exec } = require('child_process');
 
 const PORT = 20129;
 const DATA_DIR = process.env.DATA_DIR || '/data/adb/atomic-router-data';
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
 const CONFIG_FILE = path.join(DATA_DIR, 'router_config.env');
 const UI_FLAG = path.join(DATA_DIR, 'enable_ui');
 const SYNC_FLAG = path.join(DATA_DIR, 'enable_sync');

@@ -50,9 +50,9 @@ fi
 export CHROME_CDP_ENDPOINT="http://127.0.0.1:9222"
 
 # Launch Standalone Control Center Web UI on isolated port 20129 (<15MB RAM)
-if [ -f "$MODDIR/control-center.js" ]; then
+if [ -f "$MODDIR/control-center.cjs" ]; then
     kill $(cat "$DATA_DIR/control_center.pid" 2>/dev/null) 2>/dev/null || true
-    DATA_DIR="$DATA_DIR" $NODE_BIN --max-old-space-size=32 "$MODDIR/control-center.js" >> "$LOG_FILE" 2>&1 &
+    DATA_DIR="$DATA_DIR" $NODE_BIN --max-old-space-size=32 "$MODDIR/control-center.cjs" >> "$LOG_FILE" 2>&1 &
     echo $! > "$DATA_DIR/control_center.pid"
 fi
 
