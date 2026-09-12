@@ -129,12 +129,17 @@ while true; do
         MODE="Dashboard (Full Web UI Active)"
         TARGET_MAX_RAM=${CUSTOM_RAM_LIMIT:-450}
         [ "$TARGET_MAX_RAM" -lt 350 ] && TARGET_MAX_RAM=350
+        export OMNIROUTE_ENABLE_LIVE_WS=1
+        export OMNIROUTE_DISABLE_BACKGROUND_SERVICES=0
     else
-        # Ultra-Lite Core Mode: Core AI router runs 24/7 with low RAM ceiling (~150MB-220MB)
-        # Background sync, intensive pre-render, and heavy telemetry are suppressed
+        # Ultra-Lite Core Mode: Core AI router runs 24/7 with low RAM ceiling
+        # Heavy schedulers, live WS daemon (port 20132), and intensive workers are suppressed!
         MODE="Ultra-Lite Core (AI Gateway 24/7, Web UI Dormant)"
-        TARGET_MAX_RAM=${CUSTOM_RAM_LIMIT:-220}
-        [ "$TARGET_MAX_RAM" -gt 300 ] && TARGET_MAX_RAM=220
+        TARGET_MAX_RAM=${CUSTOM_RAM_LIMIT:-300}
+        export OMNIROUTE_ENABLE_LIVE_WS=0
+        export OMNIROUTE_DISABLE_BACKGROUND_SERVICES=1
+        export OMNIROUTE_DISABLE_CREDENTIAL_HEALTH_CHECK=1
+        export CLOUD_SYNC_ENABLED=false
     fi
 
     # 1. Uncap memory during initialization/booting to prevent startup OOM!
@@ -185,18 +190,12 @@ while true; do
             
             # If server stabilized for 3 checks (6s) or after 25 iterations (50s)
             if [ $BOOT_SETTLE_COUNT -ge 3 ] || [ $i -eq 25 ]; then
-                # Calculate auto-locked ceiling: (stable RSS + 40MB buffer)
-                AUTO_LOCK_MB=$((CUR_RSS_MB + 40))
+                # Calculate auto-locked ceiling: always slightly above actual stable RSS (+ 35MB buffer)
+                FINAL_LOCK_MB=$((CUR_RSS_MB + 35))
                 
-                # If user specified a limit in control center, respect user's limit as ceiling
-                if [ -n "$TARGET_MAX_RAM" ] && [ "$TARGET_MAX_RAM" -ge 150 ]; then
-                    if [ $AUTO_LOCK_MB -gt "$TARGET_MAX_RAM" ]; then
-                        FINAL_LOCK_MB=$TARGET_MAX_RAM
-                    else
-                        FINAL_LOCK_MB=$AUTO_LOCK_MB
-                    fi
-                else
-                    FINAL_LOCK_MB=$AUTO_LOCK_MB
+                # If user set a higher manual RAM limit, allow up to user limit
+                if [ -n "$TARGET_MAX_RAM" ] && [ "$TARGET_MAX_RAM" -gt "$FINAL_LOCK_MB" ]; then
+                    FINAL_LOCK_MB=$TARGET_MAX_RAM
                 fi
                 
                 echo "[INFO] Boot phase finished! Stable RSS: ${CUR_RSS_MB}MB. Auto-locking RAM target: ${FINAL_LOCK_MB}MB." >> "$LOG_FILE"
