@@ -192,13 +192,17 @@ jobs:
           tar -C "$TARGET_DIR" -cf - . | tar -C "$STAGE_APP/" -xf -
           (
             cd "$STAGE_APP"
+            # Prune non-runtime docs, tests, source maps, typescript types
             rm -rf docs tests CHANGELOG.md CONTRIBUTING.md CODE_OF_CONDUCT.md images changelog.d contrib docker examples .git promptfooconfig.yaml playwright.config.ts stryker.* vitest.* codecov.yml sonar-project.properties Makefile Dockerfile 2>/dev/null || true
             find . -type f \( -name "*.dll" -o -name "*.dylib" -o -name "*.exe" \) -delete || true
             find node_modules -type d \( -name "win32" -o -name "darwin" -o -name "ia32" \) -exec rm -rf {} + 2>/dev/null || true
             rm -rf node_modules/promptfoo node_modules/@oven node_modules/bun node_modules/playwright node_modules/playwright-core node_modules/prettier node_modules/eslint node_modules/@eslint node_modules/vitest node_modules/c8 node_modules/knip 2>/dev/null || true
             find . -type f \( -name "*.map" -o -name "*.d.ts" -o -name "*.flow" \) -delete || true
+            # Remove redundant Next.js NFT trace metadata (.nft.json) which takes ~200MB uncompressed
+            find .build -name "*.nft.json" -delete 2>/dev/null || true
             # Aggressively prune desktop AI engines, unused native binaries to hit ~100MB
             rm -rf node_modules/@tensorflow node_modules/onnxruntime-node node_modules/@ngrok 2>/dev/null || true
+            rm -rf node_modules/typescript src 2>/dev/null || true
             rm -rf node_modules/wreq-js/rust/*darwin* node_modules/wreq-js/rust/*win32* 2>/dev/null || true
             rm -rf .build/next/node_modules/wreq-js*/rust/*darwin* .build/next/node_modules/wreq-js*/rust/*win32* 2>/dev/null || true
             rm -rf node_modules/better-sqlite3/prebuilds/*darwin* node_modules/better-sqlite3/prebuilds/*win32* 2>/dev/null || true
@@ -209,15 +213,16 @@ jobs:
             rm -f node_modules/@huggingface/transformers/dist/*.wasm 2>/dev/null || true
             rm -f .build/next/node_modules/@huggingface/transformers*/dist/*.wasm 2>/dev/null || true
             
-            # Ultra-fast Gzip compression (Extracts in ~20-30s on Android instead of 15 minutes)
-            echo "Compressing atomic-router payload into atomic-router.tar.gz (Fast extraction)..."
+            # Fast-decompress XZ compression (level -3 with multi-threading):
+            # Keeps compressed archive around ~110-120MB, and decompresses in ~30s on mobile CPU
+            echo "Compressing atomic-router payload into atomic-router.tar.xz (Optimized size & fast decompress)..."
             mkdir -p atomic-router
             find . -mindepth 1 -maxdepth 1 ! -name atomic-router -exec mv {} atomic-router/ \;
-            tar -cf - atomic-router | gzip -9 > "$STAGE_MAGISK/atomic-router.tar.gz"
+            tar -cf - atomic-router | xz -z -3 -T0 > "$STAGE_MAGISK/atomic-router.tar.xz"
           )
           rm -rf "$STAGE_APP"
           
-          # Create Magisk zip (only contains installer scripts, node bin/lib, and atomic-router.tar.gz)
+          # Create Magisk zip (only contains installer scripts, node bin/lib, and atomic-router.tar.xz)
           (cd "$STAGE_MAGISK" && zip -r -9 /tmp/atomic-router-magisk.zip .)
           mv /tmp/atomic-router-magisk.zip ./atomic-router-magisk.zip
           rm -rf "$STAGE_MAGISK"

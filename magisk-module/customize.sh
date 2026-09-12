@@ -22,16 +22,15 @@ if [ -n "$PAYLOAD" ]; then
     ui_print "  [1/3] Decompressing runtime & dependencies..."
     
     if [ "$PAYLOAD_TYPE" = "gzip" ]; then
-        # Fast streaming gzip (native to busybox / toybox on Android)
         if command -v gzip >/dev/null 2>&1; then
             gzip -dc "$PAYLOAD" | tar -xf - -C "$MODPATH/" 2>/dev/null || tar -xzf "$PAYLOAD" -C "$MODPATH/"
         else
             tar -xzf "$PAYLOAD" -C "$MODPATH/" 2>/dev/null || tar -xf "$PAYLOAD" -C "$MODPATH/"
         fi
     else
-        # Legacy xz decompression
+        # Multi-threaded / streaming xz decompression
         if command -v xz >/dev/null 2>&1; then
-            xz -dc "$PAYLOAD" | tar -xf - -C "$MODPATH/" 2>/dev/null || tar -xJf "$PAYLOAD" -C "$MODPATH/"
+            xz -dc "$PAYLOAD" 2>/dev/null | tar -xf - -C "$MODPATH/" 2>/dev/null || tar -xJf "$PAYLOAD" -C "$MODPATH/" 2>/dev/null || tar -xf "$PAYLOAD" -C "$MODPATH/"
         else
             tar -xJf "$PAYLOAD" -C "$MODPATH/" 2>/dev/null || tar -xf "$PAYLOAD" -C "$MODPATH/"
         fi
