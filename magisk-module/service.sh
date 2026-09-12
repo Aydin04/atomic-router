@@ -150,9 +150,10 @@ while true; do
 
     # 1. Uncap memory during initialization/booting to prevent startup OOM!
     # V8 is given ample breathing room (1024MB) while compiling Next.js AST, SQLite, routes, and modules.
+    # --expose-gc enables active garbage collection to reclaim memory immediately once boot settles.
     BOOT_RAM_LIMIT=1024
     export NEXT_MANUAL_SIG_HANDLE=true
-    V8_FLAGS="--max-old-space-size=$BOOT_RAM_LIMIT --max-semi-space-size=2 --optimize-for-size"
+    V8_FLAGS="--max-old-space-size=$BOOT_RAM_LIMIT --max-semi-space-size=2 --optimize-for-size --expose-gc"
 
     echo "[INFO] Launching AtomicRouter in $MODE mode (Boot Cap: ${BOOT_RAM_LIMIT}MB, Target Limit: ${TARGET_MAX_RAM}MB)..."
     START_TIME=$(date +%s)
@@ -168,7 +169,7 @@ while true; do
     fi
 
     # 2. Dynamic Memory Stabilizer & Auto-Lock Background Monitor
-    # Allows server to boot freely without OOM, then monitors when RSS stabilizes
+    # Allows server to boot freely without OOM, triggers GC upon stabilization, and auto-locks ceiling
     (
         BOOT_SETTLE_COUNT=0
         LAST_RSS=0
@@ -196,31 +197,40 @@ while true; do
             
             # If server stabilized for 3 checks (6s) or after 25 iterations (50s)
             if [ $BOOT_SETTLE_COUNT -ge 3 ] || [ $i -eq 25 ]; then
+                # Trigger kernel cache reclaim to release cached boot memory
+                echo 1 > "/proc/sys/vm/compact_memory" 2>/dev/null || true
+                echo 3 > "/proc/sys/vm/drop_caches" 2>/dev/null || true
+                sleep 1
+
+                # Re-check RSS after initial compaction
+                COMPACT_RSS_KB=$(grep -i 'VmRSS:' "/proc/$ROUTER_PID/status" 2>/dev/null | awk '{print $2}')
+                [ -n "$COMPACT_RSS_KB" ] && CUR_RSS_MB=$((COMPACT_RSS_KB / 1024))
+
                 # Calculate auto-locked ceiling: always slightly above actual stable RSS (+ 35MB buffer)
                 FINAL_LOCK_MB=$((CUR_RSS_MB + 35))
                 
-                # If user set a higher manual RAM limit, allow up to user limit
+                # If user set a manual target or in Lite mode, clamp appropriately
                 if [ -n "$TARGET_MAX_RAM" ] && [ "$TARGET_MAX_RAM" -gt "$FINAL_LOCK_MB" ]; then
                     FINAL_LOCK_MB=$TARGET_MAX_RAM
                 fi
                 
-                echo "[INFO] Boot phase finished! Stable RSS: ${CUR_RSS_MB}MB. Auto-locking RAM target: ${FINAL_LOCK_MB}MB." >> "$LOG_FILE"
+                echo "[INFO] Boot phase finished! Settled RSS: ${CUR_RSS_MB}MB. Auto-locking RAM target: ${FINAL_LOCK_MB}MB." >> "$LOG_FILE"
                 echo "$FINAL_LOCK_MB" > "$DATA_DIR/locked_ram_limit"
                 break
             fi
         done
         
         # Continuous Memory Watchdog:
-        # If process ever climbs too high above lock target, trigger gentle V8 GC via signal or trim
+        # If process ever climbs too high above lock target, trigger gentle memory compaction
         while [ -d "/proc/$ROUTER_PID" ]; do
-            sleep 10
+            sleep 15
             CUR_RSS_KB=$(grep -i 'VmRSS:' "/proc/$ROUTER_PID/status" 2>/dev/null | awk '{print $2}')
             [ -z "$CUR_RSS_KB" ] && continue
             CUR_RSS_MB=$((CUR_RSS_KB / 1024))
             LOCK_VAL=$(cat "$DATA_DIR/locked_ram_limit" 2>/dev/null || echo "$FINAL_LOCK_MB")
             if [ -n "$LOCK_VAL" ] && [ "$CUR_RSS_MB" -gt "$((LOCK_VAL + 50))" ]; then
-                # Notify kernel to compact/reclaim process memory
                 echo 1 > "/proc/sys/vm/compact_memory" 2>/dev/null || true
+                echo 2 > "/proc/sys/vm/drop_caches" 2>/dev/null || true
             fi
         done
     ) &
