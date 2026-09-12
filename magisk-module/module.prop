@@ -3,5 +3,5 @@ name=AtomicRouter Magisk Module
 author=Aydin04
 description=Run AtomicRouter background service on Android with low-RAM limits (~128MB). Accessible at http://127.0.0.1:20128
 updateJson=https://raw.githubusercontent.com/Aydin04/atomic-router/main/magisk-module/update.json
-version=v3.8.54
-versionCode=3854
+version=v3.8.50
+versionCode=3850
