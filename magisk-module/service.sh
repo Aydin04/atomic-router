@@ -84,6 +84,25 @@ while true; do
         export OPENROUTER_STATS_SYNC_ENABLED=false
     fi
 
+    # Logging control:
+    # When disable_internal_logs is active (or by default in Ultra-Lite mode),
+    # suppress internal request call logs & file logging to save RAM and flash storage wear.
+    LOG_FLAG="$DATA_DIR/enable_internal_logs"
+    if [ -f "$LOG_FLAG" ]; then
+        export APP_LOG_LEVEL="info"
+        export APP_LOG_TO_FILE="true"
+        export CALL_LOGS_TABLE_MAX_ROWS=1000
+        export PROXY_LOGS_TABLE_MAX_ROWS=1000
+    else
+        export APP_LOG_LEVEL="warn"
+        export APP_LOG_TO_FILE="false"
+        export CALL_LOG_RETENTION_DAYS=1
+        export CALL_LOG_MAX_ENTRIES=100
+        export CALL_LOGS_TABLE_MAX_ROWS=200
+        export PROXY_LOGS_TABLE_MAX_ROWS=200
+        export CALL_LOG_PIPELINE_MAX_SIZE_KB=32
+    fi
+
     if [ -f "$UI_FLAG" ]; then
         MODE="Dashboard (Full Web UI)"
         RAM_LIMIT=${CUSTOM_RAM_LIMIT:-450}

@@ -57,6 +57,13 @@ get_process_info() {
     else
         SYNC_STATE="DISABLED (Offline / Clean)"
     fi
+
+    LOG_FLAG="$DATA_DIR/enable_internal_logs"
+    if [ -f "$LOG_FLAG" ]; then
+        LOG_STATE="ENABLED (Full App/Request Logs)"
+    else
+        LOG_STATE="DISABLED (Silent / Low-RAM Mode)"
+    fi
 }
 
 show_menu() {
@@ -70,13 +77,14 @@ show_menu() {
     echo " Live RAM Usage   : $MEM_INFO (Max Cap: ${CUSTOM_RAM_LIMIT:-300}MB)"
     echo " Web Dashboard    : $UI_STATE"
     echo " Background Sync  : $SYNC_STATE"
+    echo " Internal Logging : $LOG_STATE"
     echo " Endpoint Target  : http://127.0.0.1:20128"
     echo "=================================================="
     echo " [1] Toggle Web Dashboard (Open/Close Browser)"
     echo " [2] Trigger On-Demand Model & Provider Sync Now"
     echo " [3] Change Max RAM Limit (Current: ${CUSTOM_RAM_LIMIT:-300}MB)"
-    echo " [4] View Live Service Logs (service.log)"
-    echo " [5] View App Proxy History (Last 25 Requests)"
+    echo " [4] Read service.log (Tail / Full / Follow)"
+    echo " [5] Toggle Internal Router Logging (Silent vs Detailed)"
     echo " [6] Clear Logs & Temporary Cache"
     echo " [7] Restart AtomicRouter Service"
     echo " [8] Stop Service Completely"
@@ -140,19 +148,57 @@ while true; do
             ;;
         4)
             echo ""
-            echo "--- [ Live Service Logs: Last 35 Lines ] ---"
-            tail -n 35 "$DATA_DIR/service.log" 2>/dev/null || echo "No logs yet."
+            echo "--- [ Read service.log ] ---"
+            echo "File path: $DATA_DIR/service.log"
+            if [ -f "$DATA_DIR/service.log" ]; then
+                LOG_SIZE=$(wc -c < "$DATA_DIR/service.log" 2>/dev/null || echo 0)
+                echo "File size: $(( LOG_SIZE / 1024 )) KB"
+            fi
+            echo "----------------------------"
+            echo " [1] View last 50 lines (Quick Tail)"
+            echo " [2] View last 150 lines"
+            echo " [3] View entire log file (cat)"
+            echo " [4] Live follow log stream (tail -f, Ctrl+C to stop)"
+            echo " [0] Return to main menu"
+            echo -n "Choose [0-4]: "
+            read -r log_choice
+            echo ""
+            case "$log_choice" in
+                1)
+                    echo "--- Last 50 Lines ---"
+                    tail -n 50 "$DATA_DIR/service.log" 2>/dev/null || echo "No logs found."
+                    ;;
+                2)
+                    echo "--- Last 150 Lines ---"
+                    tail -n 150 "$DATA_DIR/service.log" 2>/dev/null || echo "No logs found."
+                    ;;
+                3)
+                    echo "--- Entire service.log ---"
+                    cat "$DATA_DIR/service.log" 2>/dev/null || echo "No logs found."
+                    ;;
+                4)
+                    echo "--- Following live service.log (Press Ctrl+C to return) ---"
+                    tail -f -n 25 "$DATA_DIR/service.log" 2>/dev/null
+                    ;;
+                *)
+                    ;;
+            esac
             echo "--------------------------------------------"
             echo "Press ENTER to return to menu..."
             read -r _dummy
             ;;
         5)
             echo ""
-            echo "--- [ SQLite / App Proxy Logs Summary ] ---"
-            grep -E "proxyLogger|Loaded|Request|POST|GET" "$DATA_DIR/service.log" 2>/dev/null | tail -n 25 || echo "No proxy traffic logged yet."
-            echo "-------------------------------------------"
-            echo "Press ENTER to return to menu..."
-            read -r _dummy
+            LOG_FLAG="$DATA_DIR/enable_internal_logs"
+            if [ -f "$LOG_FLAG" ]; then
+                rm -f "$LOG_FLAG"
+                echo "[-] Atomic internal logging DISABLED (Silent mode: warn only, no file logging, minimum memory/flash writes)."
+            else
+                touch "$LOG_FLAG"
+                echo "[+] Atomic internal logging ENABLED (Detailed mode: info level, call logs enabled)."
+            fi
+            reload_service
+            sleep 2
             ;;
         6)
             echo ""
