@@ -197,8 +197,8 @@ function renderHtml() {
     <!-- Toggle Dashboard -->
     <div class="item-row">
       <div class="item-info">
-        <div class="item-name">Web Dashboard (Next.js Ori)</div>
-        <div class="item-desc">ON: Jalankan Dashboard original (Port 20128). OFF: Matikan total Next.js (0 MB RAM).</div>
+        <div class="item-name">Web Dashboard Mode (Next.js Ori)</div>
+        <div class="item-desc">ON: Buka Dashboard Full UI (port 20128). OFF: Mode Ultra-Lite hemat RAM (Core AI tetap hidup 24/7).</div>
       </div>
       <label class="switch">
         <input type="checkbox" id="toggle-dash" onchange="toggleFeature('dashboard', this.checked)">

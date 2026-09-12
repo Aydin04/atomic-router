@@ -131,31 +131,34 @@ while true; do
         [ "$RAM_LIMIT" -lt 350 ] && RAM_LIMIT=350
         export NEXT_MANUAL_SIG_HANDLE=true
         V8_FLAGS="--max-old-space-size=$RAM_LIMIT --max-semi-space-size=2 --optimize-for-size"
-        
-        echo "[INFO] Launching AtomicRouter in $MODE mode (RAM Limit: ${RAM_LIMIT}MB)..."
-        START_TIME=$(date +%s)
-        
-        $NODE_BIN $V8_FLAGS server.js &
-        ROUTER_PID=$!
-        echo "$ROUTER_PID" > "$DATA_DIR/atomic.pid"
-        echo "[INFO] AtomicRouter running with PID: $ROUTER_PID"
-
-        # Protect AtomicRouter from Android Low Memory Killer (LMK)
-        if [ -f "/proc/$ROUTER_PID/oom_score_adj" ]; then
-            echo -700 > "/proc/$ROUTER_PID/oom_score_adj" 2>/dev/null
-        fi
-
-        wait $ROUTER_PID
-        EXIT_CODE=$?
-        rm -f "$DATA_DIR/atomic.pid"
-        UPTIME=$(( $(date +%s) - START_TIME ))
-        echo "[INFO] AtomicRouter stopped (Exit code: $EXIT_CODE, Uptime: ${UPTIME}s)"
     else
-        # Dashboard is completely OFF (0 MB RAM overhead for Next.js / server.js)
-        # Control Center on port 20129 remains active waiting for your click to turn it ON.
-        rm -f "$DATA_DIR/atomic.pid"
-        sleep 2
+        # Ultra-Lite Core Mode: Core AI router runs 24/7 with low RAM ceiling (~150MB-200MB)
+        # Background sync, intensive pre-render, and heavy telemetry are suppressed
+        MODE="Ultra-Lite Core (AI Gateway 24/7, Web UI Dormant)"
+        RAM_LIMIT=${CUSTOM_RAM_LIMIT:-220}
+        [ "$RAM_LIMIT" -gt 250 ] && RAM_LIMIT=220
+        export NEXT_MANUAL_SIG_HANDLE=true
+        V8_FLAGS="--max-old-space-size=$RAM_LIMIT --max-semi-space-size=2 --optimize-for-size"
     fi
+
+    echo "[INFO] Launching AtomicRouter in $MODE mode (RAM Limit: ${RAM_LIMIT}MB)..."
+    START_TIME=$(date +%s)
+    
+    $NODE_BIN $V8_FLAGS server.js &
+    ROUTER_PID=$!
+    echo "$ROUTER_PID" > "$DATA_DIR/atomic.pid"
+    echo "[INFO] AtomicRouter running with PID: $ROUTER_PID"
+
+    # Protect AtomicRouter from Android Low Memory Killer (LMK)
+    if [ -f "/proc/$ROUTER_PID/oom_score_adj" ]; then
+        echo -700 > "/proc/$ROUTER_PID/oom_score_adj" 2>/dev/null
+    fi
+
+    wait $ROUTER_PID
+    EXIT_CODE=$?
+    rm -f "$DATA_DIR/atomic.pid"
+    UPTIME=$(( $(date +%s) - START_TIME ))
+    echo "[INFO] AtomicRouter stopped (Exit code: $EXIT_CODE, Uptime: ${UPTIME}s)"
 
     # Short delay before rebooting daemon loop
     sleep 1
