@@ -69,14 +69,18 @@ while true; do
     if [ -f "$UI_FLAG" ]; then
         MODE="Dashboard (Full Web UI)"
         RAM_LIMIT=450
-        export OMNIROUTE_HEADLESS=0
         export NEXT_MANUAL_SIG_HANDLE=true
+        export ARENA_ELO_SYNC_ENABLED=true
         V8_FLAGS="--max-old-space-size=$RAM_LIMIT --optimize-for-size"
     else
         MODE="Ultra-Lite (Gateway Core Only)"
-        RAM_LIMIT=180
-        export OMNIROUTE_HEADLESS=1
-        V8_FLAGS="--max-old-space-size=$RAM_LIMIT --optimize-for-size --gc-interval=100 --max-semi-space-size=2"
+        RAM_LIMIT=280
+        # Disable heavy periodic background syncs in Ultra-Lite mode to keep memory ultra-lean
+        export ARENA_ELO_SYNC_ENABLED=false
+        export PRICING_SYNC_ENABLED=false
+        export MODELS_DEV_SYNC_ENABLED=0
+        export OPENROUTER_STATS_SYNC_ENABLED=false
+        V8_FLAGS="--max-old-space-size=$RAM_LIMIT --optimize-for-size"
     fi
 
     echo "[INFO] Launching AtomicRouter in $MODE mode (RAM Limit: ${RAM_LIMIT}MB)..."
