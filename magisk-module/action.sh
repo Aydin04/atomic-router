@@ -11,6 +11,10 @@ mkdir -p "$DATA_DIR"
 if [ ! -f "$CONFIG_FILE" ]; then
     cat << 'CFG' > "$CONFIG_FILE"
 CUSTOM_RAM_LIMIT=300
+BIND_HOST=0.0.0.0
+REQUIRE_AUTH=false
+CUSTOM_API_KEY=dsh-local-key
+CUSTOM_ADMIN_PASSWORD=admin
 AUTO_SHUTDOWN_MINUTES=15
 SYNC_MODELS=false
 SYNC_ARENA=false
@@ -64,6 +68,13 @@ get_process_info() {
     else
         LOG_STATE="DISABLED (Silent / Low-RAM Mode)"
     fi
+
+    TARGET_HOST="${BIND_HOST:-0.0.0.0}"
+    if [ "$REQUIRE_AUTH" = "true" ]; then
+        AUTH_STATE="ENABLED (Key: ${CUSTOM_API_KEY:-dsh-local-key})"
+    else
+        AUTH_STATE="DISABLED (Open / No Auth)"
+    fi
 }
 
 show_menu() {
@@ -75,22 +86,26 @@ show_menu() {
     echo " Service Status   : $STATUS"
     echo " Service Uptime   : $UP_INFO"
     echo " Live RAM Usage   : $MEM_INFO (Max Cap: ${CUSTOM_RAM_LIMIT:-300}MB)"
+    echo " Network Binding  : $TARGET_HOST:20128"
+    echo " API Key Auth     : $AUTH_STATE"
     echo " Web Dashboard    : $UI_STATE"
     echo " Background Sync  : $SYNC_STATE"
     echo " Internal Logging : $LOG_STATE"
-    echo " Endpoint Target  : http://127.0.0.1:20128"
     echo "=================================================="
     echo " [1] Toggle Web Dashboard (Open/Close Browser)"
-    echo " [2] Trigger On-Demand Model & Provider Sync Now"
-    echo " [3] Change Max RAM Limit (Current: ${CUSTOM_RAM_LIMIT:-300}MB)"
-    echo " [4] Read service.log (Tail / Full / Follow)"
-    echo " [5] Toggle Internal Router Logging (Silent vs Detailed)"
-    echo " [6] Clear Logs & Temporary Cache"
-    echo " [7] Restart AtomicRouter Service"
-    echo " [8] Stop Service Completely"
+    echo " [2] Toggle API Key & Password Protection"
+    echo " [3] Toggle Network Binding (Localhost vs All/WiFi)"
+    echo " [4] Trigger On-Demand Model & Provider Sync Now"
+    echo " [5] Change Max RAM Limit (Current: ${CUSTOM_RAM_LIMIT:-300}MB)"
+    echo " [6] Read service.log (Tail / Full / Follow)"
+    echo " [7] Toggle Internal Router Logging (Silent vs Detailed)"
+    echo " [8] Configure Custom API Key & Admin Password"
+    echo " [9] Clear Logs & Temporary Cache"
+    echo " [10] Restart AtomicRouter Service"
+    echo " [11] Stop Service Completely"
     echo " [0] Exit Control Center"
     echo "=================================================="
-    echo -n "Select option [0-8]: "
+    echo -n "Select option [0-11]: "
 }
 
 reload_service() {
@@ -124,6 +139,36 @@ while true; do
             ;;
         2)
             echo ""
+            if [ "$REQUIRE_AUTH" = "true" ]; then
+                sed -i "s/REQUIRE_AUTH=.*/REQUIRE_AUTH=false/" "$CONFIG_FILE"
+                REQUIRE_AUTH=false
+                echo "[-] API Key & Password protection DISABLED (Anonymous access allowed)."
+            else
+                sed -i "s/REQUIRE_AUTH=.*/REQUIRE_AUTH=true/" "$CONFIG_FILE"
+                REQUIRE_AUTH=true
+                echo "[+] API Key & Password protection ENABLED!"
+                echo "    Active Key : ${CUSTOM_API_KEY:-dsh-local-key}"
+                echo "    Admin Pass : ${CUSTOM_ADMIN_PASSWORD:-admin}"
+            fi
+            reload_service
+            sleep 2
+            ;;
+        3)
+            echo ""
+            if [ "$BIND_HOST" = "127.0.0.1" ]; then
+                sed -i "s/BIND_HOST=.*/BIND_HOST=0.0.0.0/" "$CONFIG_FILE"
+                BIND_HOST=0.0.0.0
+                echo "[+] Network Binding set to: 0.0.0.0 (Accessible via LAN / WiFi / Hotspot)."
+            else
+                sed -i "s/BIND_HOST=.*/BIND_HOST=127.0.0.1/" "$CONFIG_FILE"
+                BIND_HOST=127.0.0.1
+                echo "[-] Network Binding set to: 127.0.0.1 (Localhost only, secure on public WiFi)."
+            fi
+            reload_service
+            sleep 2
+            ;;
+        4)
+            echo ""
             echo "[+] Arming On-Demand Background Sync..."
             touch "$SYNC_FLAG"
             reload_service
@@ -131,7 +176,7 @@ while true; do
             echo "[+] Models and Arena stats are synchronizing in background..."
             sleep 2
             ;;
-        3)
+        5)
             echo ""
             echo "Current Max RAM limit is: ${CUSTOM_RAM_LIMIT:-300} MB"
             echo -n "Enter new RAM limit in MB (e.g. 200, 300, 400, 500): "
@@ -146,7 +191,7 @@ while true; do
             fi
             sleep 2
             ;;
-        4)
+        6)
             echo ""
             echo "--- [ Read service.log ] ---"
             echo "File path: $DATA_DIR/service.log"
@@ -187,7 +232,7 @@ while true; do
             echo "Press ENTER to return to menu..."
             read -r _dummy
             ;;
-        5)
+        7)
             echo ""
             LOG_FLAG="$DATA_DIR/enable_internal_logs"
             if [ -f "$LOG_FLAG" ]; then
@@ -200,7 +245,30 @@ while true; do
             reload_service
             sleep 2
             ;;
-        6)
+        8)
+            echo ""
+            echo "--- [ Configure API Key & Password ] ---"
+            echo "Current API Key   : ${CUSTOM_API_KEY:-dsh-local-key}"
+            echo "Current Admin Pass: ${CUSTOM_ADMIN_PASSWORD:-admin}"
+            echo ""
+            echo -n "Enter new API Key (leave empty to keep current): "
+            read -r new_key
+            if [ -n "$new_key" ]; then
+                sed -i "s/CUSTOM_API_KEY=.*/CUSTOM_API_KEY=$new_key/" "$CONFIG_FILE"
+                CUSTOM_API_KEY="$new_key"
+                echo "[+] API Key updated."
+            fi
+            echo -n "Enter new Admin Password (leave empty to keep current): "
+            read -r new_pass
+            if [ -n "$new_pass" ]; then
+                sed -i "s/CUSTOM_ADMIN_PASSWORD=.*/CUSTOM_ADMIN_PASSWORD=$new_pass/" "$CONFIG_FILE"
+                CUSTOM_ADMIN_PASSWORD="$new_pass"
+                echo "[+] Admin Password updated."
+            fi
+            reload_service
+            sleep 2
+            ;;
+        9)
             echo ""
             echo "[+] Clearing service.log and temp cache..."
             rm -f "$DATA_DIR/service.log" "$DATA_DIR/service.log.1" "$DATA_DIR/tmp/*" 2>/dev/null
@@ -208,13 +276,13 @@ while true; do
             echo "[+] Logs cleaned."
             sleep 1
             ;;
-        7)
+        10)
             echo ""
             echo "[+] Restarting AtomicRouter daemon..."
             reload_service
             sleep 2
             ;;
-        8)
+        11)
             echo ""
             rm -f "$UI_FLAG" "$SYNC_FLAG"
             PID=$(cat "$DATA_DIR/atomic.pid" 2>/dev/null)
@@ -231,7 +299,7 @@ while true; do
             break
             ;;
         *)
-            echo "Invalid option. Please choose [0-8]."
+            echo "Invalid option. Please choose [0-11]."
             sleep 1
             ;;
     esac

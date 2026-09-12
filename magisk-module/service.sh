@@ -36,10 +36,6 @@ echo "[INFO] Using Node binary: $NODE_BIN"
 
 # Runtime Environment Variables
 export PORT=20128
-export HOST="0.0.0.0"
-export REQUIRE_API_KEY="false"
-export ROUTER_API_KEY="dsh-local-key"
-export OMNIROUTE_API_KEY="dsh-local-key"
 export HOME="$DATA_DIR"
 export TMPDIR="$DATA_DIR/tmp"
 export PATH="$MODDIR/bin:/system/bin:/system/xbin:$PATH"
@@ -71,6 +67,25 @@ while true; do
     # Load user config if exists
     [ -f "$CONFIG_FILE" ] && . "$CONFIG_FILE"
     
+    # Network Binding: 0.0.0.0 (LAN/WiFi) vs 127.0.0.1 (Localhost only)
+    export HOST="${BIND_HOST:-0.0.0.0}"
+
+    # Authentication Control:
+    # If REQUIRE_AUTH=true, enforce API key and password protection
+    if [ "$REQUIRE_AUTH" = "true" ]; then
+        export REQUIRE_API_KEY="true"
+        export ROUTER_API_KEY="${CUSTOM_API_KEY:-dsh-local-key}"
+        export OMNIROUTE_API_KEY="${CUSTOM_API_KEY:-dsh-local-key}"
+        if [ -n "$CUSTOM_ADMIN_PASSWORD" ]; then
+            export INITIAL_PASSWORD="$CUSTOM_ADMIN_PASSWORD"
+        fi
+    else
+        export REQUIRE_API_KEY="false"
+        export ROUTER_API_KEY="dsh-local-key"
+        export OMNIROUTE_API_KEY="dsh-local-key"
+        unset INITIAL_PASSWORD
+    fi
+
     # Check sync state
     if [ -f "$SYNC_FLAG" ]; then
         export ARENA_ELO_SYNC_ENABLED=true
