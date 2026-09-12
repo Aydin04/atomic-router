@@ -41,13 +41,16 @@ if [ -n "$PAYLOAD" ]; then
     ui_print "  [3/3] Extraction completed successfully!"
 fi
 
-set_perm_recursive $MODPATH 0 0 0755 0644
-set_perm $MODPATH/service.sh 0 0 0755
-set_perm $MODPATH/action.sh 0 0 0755
-set_perm_recursive $MODPATH/bin 0 0 0755 0755
-set_perm_recursive $MODPATH/lib 0 0 0755 0755
+ui_print "- Setting file permissions..."
+# Fast permission setup: Magisk already extracts files with root permissions.
+# Only set executable permissions on scripts and binaries to avoid slow iteration over 40,000+ files!
+chmod 755 "$MODPATH" 2>/dev/null || true
+chmod 755 "$MODPATH/service.sh" "$MODPATH/action.sh" 2>/dev/null || true
+chmod -R 755 "$MODPATH/bin" "$MODPATH/lib" 2>/dev/null || true
+[ -f "$MODPATH/control-center.cjs" ] && chmod 644 "$MODPATH/control-center.cjs" 2>/dev/null || true
 
 ui_print "- Embedded Node.js runtime included (Standalone)"
 ui_print "- RAM limit: 300MB adaptive (500MB peak workload backup)"
 ui_print "- Web dashboard port: 20128"
+ui_print "- Control Center port: 20129"
 ui_print "- Installed successfully! Reboot to activate."
