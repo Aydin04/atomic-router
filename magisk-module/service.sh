@@ -53,46 +53,51 @@ if which socat >/dev/null 2>&1; then
 fi
 export CHROME_CDP_ENDPOINT="http://127.0.0.1:9222"
 
-# Dynamic RAM Limiter Loop:
-# Default: 300MB. If OOM crash occurs (code 137 / heap out of memory),
-# fallback temporarily to 500MB, then recover back to 300MB.
-CURRENT_RAM_LIMIT=300
+# Dynamic Dual-Mode Architecture:
+# 1. Ultra-Lite Mode (Default, ~80MB - 120MB):
+#    Runs Core AI Gateway routing, streaming, auto-fallback, and token compression.
+#    Web UI is dormant, freeing ~75% memory.
+# 2. Dashboard Mode (Triggered via Magisk Action button, ~350MB):
+#    Runs full web management interface with auto-off timer.
+
+export UV_THREADPOOL_SIZE=2
+UI_FLAG="$DATA_DIR/enable_ui"
+
 cd "$MODDIR/atomic-router" || exit 1
 
 while true; do
-    echo "[INFO] Launching AtomicRouter (Target RAM Limit: ${CURRENT_RAM_LIMIT}MB)..."
+    if [ -f "$UI_FLAG" ]; then
+        MODE="Dashboard (Full Web UI)"
+        RAM_LIMIT=450
+        export OMNIROUTE_HEADLESS=0
+        export NEXT_MANUAL_SIG_HANDLE=true
+        V8_FLAGS="--max-old-space-size=$RAM_LIMIT --optimize-for-size"
+    else
+        MODE="Ultra-Lite (Gateway Core Only)"
+        RAM_LIMIT=180
+        export OMNIROUTE_HEADLESS=1
+        V8_FLAGS="--max-old-space-size=$RAM_LIMIT --optimize-for-size --gc-interval=100 --max-semi-space-size=2"
+    fi
+
+    echo "[INFO] Launching AtomicRouter in $MODE mode (RAM Limit: ${RAM_LIMIT}MB)..."
     START_TIME=$(date +%s)
     
-    $NODE_BIN --max-old-space-size=$CURRENT_RAM_LIMIT server.js &
+    $NODE_BIN $V8_FLAGS server.js &
     ROUTER_PID=$!
+    echo "$ROUTER_PID" > "$DATA_DIR/atomic.pid"
     echo "[INFO] AtomicRouter running with PID: $ROUTER_PID"
 
-    # Apply OOM protection
+    # Protect AtomicRouter from Android Low Memory Killer (LMK)
     if [ -f "/proc/$ROUTER_PID/oom_score_adj" ]; then
-        echo 200 > "/proc/$ROUTER_PID/oom_score_adj" 2>/dev/null
+        echo -700 > "/proc/$ROUTER_PID/oom_score_adj" 2>/dev/null
     fi
 
     wait $ROUTER_PID
     EXIT_CODE=$?
+    rm -f "$DATA_DIR/atomic.pid"
     UPTIME=$(( $(date +%s) - START_TIME ))
-    echo "[WARN] AtomicRouter stopped (Exit code: $EXIT_CODE, Uptime: ${UPTIME}s)"
+    echo "[INFO] AtomicRouter stopped (Exit code: $EXIT_CODE, Uptime: ${UPTIME}s)"
 
-    # If crashed quickly or exit code 137 (SIGKILL/OOM), elevate limit to 500MB backup
-    if [ $EXIT_CODE -eq 137 ] || [ $UPTIME -lt 15 ]; then
-        if [ $CURRENT_RAM_LIMIT -lt 500 ]; then
-            echo "[ALERT] Possible OOM or heavy workload detected! Elevating RAM limit to backup 500MB..."
-            CURRENT_RAM_LIMIT=500
-        else
-            echo "[WARN] Crashed at 500MB, resting 5s before restart..."
-            sleep 5
-            CURRENT_RAM_LIMIT=300
-        fi
-    else
-        # If ran stably for more than 60s, automatically revert back to 300MB target
-        if [ $UPTIME -gt 60 ]; then
-            echo "[INFO] Process ran stably. Ensuring standard 300MB RAM limit."
-            CURRENT_RAM_LIMIT=300
-        fi
-        sleep 2
-    fi
+    # Short delay before rebooting daemon
+    sleep 1
 done
