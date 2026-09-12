@@ -197,8 +197,8 @@ function renderHtml() {
     <!-- Toggle Dashboard -->
     <div class="item-row">
       <div class="item-info">
-        <div class="item-name">Web Dashboard (Next.js)</div>
-        <div class="item-desc">Aktifkan untuk buka UI OmniRoute original (Port 20128). Matikan untuk mode Ultra-Lite (~80MB).</div>
+        <div class="item-name">Web Dashboard (Next.js Ori)</div>
+        <div class="item-desc">ON: Jalankan Dashboard original (Port 20128). OFF: Matikan total Next.js (0 MB RAM).</div>
       </div>
       <label class="switch">
         <input type="checkbox" id="toggle-dash" onchange="toggleFeature('dashboard', this.checked)">

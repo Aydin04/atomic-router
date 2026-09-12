@@ -209,15 +209,15 @@ jobs:
             rm -f node_modules/@huggingface/transformers/dist/*.wasm 2>/dev/null || true
             rm -f .build/next/node_modules/@huggingface/transformers*/dist/*.wasm 2>/dev/null || true
             
-            # Ultra-compress with XZ Level 6 (Optimal balance: tiny size, 3-5x faster decompression on Android)
-            echo "Compressing atomic-router payload into atomic-router.tar.xz..."
+            # Ultra-fast Gzip compression (Extracts in ~20-30s on Android instead of 15 minutes)
+            echo "Compressing atomic-router payload into atomic-router.tar.gz (Fast extraction)..."
             mkdir -p atomic-router
             find . -mindepth 1 -maxdepth 1 ! -name atomic-router -exec mv {} atomic-router/ \;
-            tar -cf - atomic-router | xz -z -6 -T0 > "$STAGE_MAGISK/atomic-router.tar.xz"
+            tar -cf - atomic-router | gzip -9 > "$STAGE_MAGISK/atomic-router.tar.gz"
           )
           rm -rf "$STAGE_APP"
           
-          # Create Magisk zip (only contains installer scripts, node bin/lib, and atomic-router.tar.xz)
+          # Create Magisk zip (only contains installer scripts, node bin/lib, and atomic-router.tar.gz)
           (cd "$STAGE_MAGISK" && zip -r -9 /tmp/atomic-router-magisk.zip .)
           mv /tmp/atomic-router-magisk.zip ./atomic-router-magisk.zip
           rm -rf "$STAGE_MAGISK"

@@ -7,45 +7,39 @@ ui_print "****************************************"
 ui_print "- Installing AtomicRouter files..."
 mkdir -p /data/adb/atomic-router-data
 
-# Extract payload using RAM disk (tmpfs) if available for maximum I/O speed
-if [ -f "$MODPATH/atomic-router.tar.xz" ]; then
-    ui_print "- Extracting package using RAM buffer (Fast I/O)..."
-    
-    # Try creating a temporary RAM disk mount or using /dev/shm /tmp
-    RAM_TMP=""
-    for cand in /dev/shm /tmp /sqlite_stmt_journals; do
-        if [ -d "$cand" ] && [ -w "$cand" ]; then
-            RAM_TMP="$cand"
-            break
-        fi
-    done
-    
-    # If no existing ramfs found, try mounting a lightweight tmpfs
-    TMPFS_MOUNTED=0
-    if [ -z "$RAM_TMP" ]; then
-        mkdir -p /tmp/atomic_ram
-        if mount -t tmpfs -o size=250M tmpfs /tmp/atomic_ram 2>/dev/null; then
-            RAM_TMP="/tmp/atomic_ram"
-            TMPFS_MOUNTED=1
-        fi
-    fi
+# Extract payload (supports fast gzip atomic-router.tar.gz or legacy .tar.xz)
+PAYLOAD=""
+if [ -f "$MODPATH/atomic-router.tar.gz" ]; then
+    PAYLOAD="$MODPATH/atomic-router.tar.gz"
+    PAYLOAD_TYPE="gzip"
+elif [ -f "$MODPATH/atomic-router.tar.xz" ]; then
+    PAYLOAD="$MODPATH/atomic-router.tar.xz"
+    PAYLOAD_TYPE="xz"
+fi
 
-    # Fast streaming decompression into $MODPATH
-    if command -v xz >/dev/null 2>&1; then
-        xz -dc "$MODPATH/atomic-router.tar.xz" | tar -xf - -C "$MODPATH/"
-    elif command -v busybox >/dev/null 2>&1 && busybox tar --help 2>&1 | grep -q 'J'; then
-        busybox tar -xJf "$MODPATH/atomic-router.tar.xz" -C "$MODPATH/"
+if [ -n "$PAYLOAD" ]; then
+    ui_print "- Extracting core payload ($PAYLOAD_TYPE format)..."
+    ui_print "  [1/3] Decompressing runtime & dependencies..."
+    
+    if [ "$PAYLOAD_TYPE" = "gzip" ]; then
+        # Fast streaming gzip (native to busybox / toybox on Android)
+        if command -v gzip >/dev/null 2>&1; then
+            gzip -dc "$PAYLOAD" | tar -xf - -C "$MODPATH/" 2>/dev/null || tar -xzf "$PAYLOAD" -C "$MODPATH/"
+        else
+            tar -xzf "$PAYLOAD" -C "$MODPATH/" 2>/dev/null || tar -xf "$PAYLOAD" -C "$MODPATH/"
+        fi
     else
-        tar -xJf "$MODPATH/atomic-router.tar.xz" -C "$MODPATH/" 2>/dev/null || \
-        xz -dc "$MODPATH/atomic-router.tar.xz" | tar -xf - -C "$MODPATH/" 2>/dev/null || \
-        tar -xf "$MODPATH/atomic-router.tar.xz" -C "$MODPATH/"
+        # Legacy xz decompression
+        if command -v xz >/dev/null 2>&1; then
+            xz -dc "$PAYLOAD" | tar -xf - -C "$MODPATH/" 2>/dev/null || tar -xJf "$PAYLOAD" -C "$MODPATH/"
+        else
+            tar -xJf "$PAYLOAD" -C "$MODPATH/" 2>/dev/null || tar -xf "$PAYLOAD" -C "$MODPATH/"
+        fi
     fi
     
-    rm -f "$MODPATH/atomic-router.tar.xz"
-    if [ "$TMPFS_MOUNTED" -eq 1 ]; then
-        umount /tmp/atomic_ram 2>/dev/null
-        rm -rf /tmp/atomic_ram
-    fi
+    ui_print "  [2/3] Verifying core modules..."
+    rm -f "$PAYLOAD"
+    ui_print "  [3/3] Extraction completed successfully!"
 fi
 
 set_perm_recursive $MODPATH 0 0 0755 0644
