@@ -139,13 +139,13 @@ while true; do
     # Background schedulers & sync control:
     # If Sync toggle is OFF, aggressively silence heavy workers & credential health sweep
     if [ -f "$SYNC_FLAG" ]; then
-        export OMNIROUTE_DISABLE_BACKGROUND_SERVICES=0
-        export OMNIROUTE_DISABLE_CREDENTIAL_HEALTH_CHECK=0
-        export CLOUD_SYNC_ENABLED=true
+        export OMNIROUTE_DISABLE_BACKGROUND_SERVICES="false"
+        export OMNIROUTE_DISABLE_CREDENTIAL_HEALTH_CHECK="false"
+        export CLOUD_SYNC_ENABLED="true"
     else
-        export OMNIROUTE_DISABLE_BACKGROUND_SERVICES=1
-        export OMNIROUTE_DISABLE_CREDENTIAL_HEALTH_CHECK=1
-        export CLOUD_SYNC_ENABLED=false
+        export OMNIROUTE_DISABLE_BACKGROUND_SERVICES="true"
+        export OMNIROUTE_DISABLE_CREDENTIAL_HEALTH_CHECK="true"
+        export CLOUD_SYNC_ENABLED="false"
     fi
 
     # 1. Uncap memory during initialization/booting to prevent startup OOM!
