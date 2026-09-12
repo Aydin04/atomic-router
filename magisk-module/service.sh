@@ -127,16 +127,22 @@ while true; do
 
     if [ -f "$UI_FLAG" ]; then
         MODE="Dashboard (Full Web UI Active)"
-        TARGET_MAX_RAM=${CUSTOM_RAM_LIMIT:-450}
-        [ "$TARGET_MAX_RAM" -lt 350 ] && TARGET_MAX_RAM=350
+        TARGET_MAX_RAM=450
         export OMNIROUTE_ENABLE_LIVE_WS=1
-        export OMNIROUTE_DISABLE_BACKGROUND_SERVICES=0
     else
         # Ultra-Lite Core Mode: Core AI router runs 24/7 with low RAM ceiling
-        # Heavy schedulers, live WS daemon (port 20132), and intensive workers are suppressed!
         MODE="Ultra-Lite Core (AI Gateway 24/7, Web UI Dormant)"
-        TARGET_MAX_RAM=${CUSTOM_RAM_LIMIT:-300}
+        TARGET_MAX_RAM=300
         export OMNIROUTE_ENABLE_LIVE_WS=0
+    fi
+
+    # Background schedulers & sync control:
+    # If Sync toggle is OFF, aggressively silence heavy workers & credential health sweep
+    if [ -f "$SYNC_FLAG" ]; then
+        export OMNIROUTE_DISABLE_BACKGROUND_SERVICES=0
+        export OMNIROUTE_DISABLE_CREDENTIAL_HEALTH_CHECK=0
+        export CLOUD_SYNC_ENABLED=true
+    else
         export OMNIROUTE_DISABLE_BACKGROUND_SERVICES=1
         export OMNIROUTE_DISABLE_CREDENTIAL_HEALTH_CHECK=1
         export CLOUD_SYNC_ENABLED=false

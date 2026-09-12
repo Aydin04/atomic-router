@@ -270,11 +270,7 @@ function renderHtml() {
   </div>
 
   <div class="card">
-    <div class="card-title">Settings & Tuning</div>
-    <div class="form-group">
-      <label>Max V8 Heap Limit (MB)</label>
-      <input type="number" id="input-ram" class="form-control" placeholder="300" min="150" max="2048">
-    </div>
+    <div class="card-title">Settings & Credentials</div>
     <div class="form-group">
       <label>Custom API Key</label>
       <input type="text" id="input-key" class="form-control" placeholder="dsh-local-key">
@@ -320,7 +316,6 @@ function renderHtml() {
         document.getElementById('toggle-host').checked = d.bindHost === '0.0.0.0';
         document.getElementById('toggle-logs').checked = d.logsActive;
 
-        if (!document.getElementById('input-ram').value) document.getElementById('input-ram').value = d.ramLimit;
         if (!document.getElementById('input-key').value) document.getElementById('input-key').value = d.apiKey;
         if (!document.getElementById('input-pass').value) document.getElementById('input-pass').value = d.adminPassword;
       } catch (e) {
@@ -338,13 +333,12 @@ function renderHtml() {
     }
 
     async function saveSettings() {
-      const ram = document.getElementById('input-ram').value;
       const key = document.getElementById('input-key').value;
       const pass = document.getElementById('input-pass').value;
       await fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ram, key, pass })
+        body: JSON.stringify({ key, pass })
       });
       alert('Pengaturan disimpan & router di-reload!');
       setTimeout(loadStatus, 1500);
