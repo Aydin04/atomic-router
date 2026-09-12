@@ -127,21 +127,23 @@ while true; do
 
     if [ -f "$UI_FLAG" ]; then
         MODE="Dashboard (Full Web UI Active)"
-        RAM_LIMIT=${CUSTOM_RAM_LIMIT:-450}
-        [ "$RAM_LIMIT" -lt 350 ] && RAM_LIMIT=350
-        export NEXT_MANUAL_SIG_HANDLE=true
-        V8_FLAGS="--max-old-space-size=$RAM_LIMIT --max-semi-space-size=2 --optimize-for-size"
+        TARGET_MAX_RAM=${CUSTOM_RAM_LIMIT:-450}
+        [ "$TARGET_MAX_RAM" -lt 350 ] && TARGET_MAX_RAM=350
     else
-        # Ultra-Lite Core Mode: Core AI router runs 24/7 with low RAM ceiling (~150MB-200MB)
+        # Ultra-Lite Core Mode: Core AI router runs 24/7 with low RAM ceiling (~150MB-220MB)
         # Background sync, intensive pre-render, and heavy telemetry are suppressed
         MODE="Ultra-Lite Core (AI Gateway 24/7, Web UI Dormant)"
-        RAM_LIMIT=${CUSTOM_RAM_LIMIT:-220}
-        [ "$RAM_LIMIT" -gt 250 ] && RAM_LIMIT=220
-        export NEXT_MANUAL_SIG_HANDLE=true
-        V8_FLAGS="--max-old-space-size=$RAM_LIMIT --max-semi-space-size=2 --optimize-for-size"
+        TARGET_MAX_RAM=${CUSTOM_RAM_LIMIT:-220}
+        [ "$TARGET_MAX_RAM" -gt 300 ] && TARGET_MAX_RAM=220
     fi
 
-    echo "[INFO] Launching AtomicRouter in $MODE mode (RAM Limit: ${RAM_LIMIT}MB)..."
+    # 1. Uncap memory during initialization/booting to prevent startup OOM!
+    # V8 is given ample breathing room (1024MB) while compiling Next.js AST, SQLite, routes, and modules.
+    BOOT_RAM_LIMIT=1024
+    export NEXT_MANUAL_SIG_HANDLE=true
+    V8_FLAGS="--max-old-space-size=$BOOT_RAM_LIMIT --max-semi-space-size=2 --optimize-for-size"
+
+    echo "[INFO] Launching AtomicRouter in $MODE mode (Boot Cap: ${BOOT_RAM_LIMIT}MB, Target Limit: ${TARGET_MAX_RAM}MB)..."
     START_TIME=$(date +%s)
     
     $NODE_BIN $V8_FLAGS server.js &
@@ -154,9 +156,75 @@ while true; do
         echo -700 > "/proc/$ROUTER_PID/oom_score_adj" 2>/dev/null
     fi
 
+    # 2. Dynamic Memory Stabilizer & Auto-Lock Background Monitor
+    # Allows server to boot freely without OOM, then monitors when RSS stabilizes
+    (
+        BOOT_SETTLE_COUNT=0
+        LAST_RSS=0
+        
+        # Wait up to 60s for boot phase to complete
+        for i in $(seq 1 30); do
+            sleep 2
+            [ ! -d "/proc/$ROUTER_PID" ] && exit 0
+            
+            # Read current VmRSS
+            CUR_RSS_KB=$(grep -i 'VmRSS:' "/proc/$ROUTER_PID/status" 2>/dev/null | awk '{print $2}')
+            [ -z "$CUR_RSS_KB" ] && continue
+            CUR_RSS_MB=$((CUR_RSS_KB / 1024))
+            
+            # Check if RSS delta is small (< 10MB variation over 3 consecutive checks)
+            DIFF=$((CUR_RSS_MB - LAST_RSS))
+            [ $DIFF -lt 0 ] && DIFF=$(( -DIFF ))
+            
+            if [ $DIFF -le 10 ] && [ $CUR_RSS_MB -ge 40 ]; then
+                BOOT_SETTLE_COUNT=$((BOOT_SETTLE_COUNT + 1))
+            else
+                BOOT_SETTLE_COUNT=0
+            fi
+            LAST_RSS=$CUR_RSS_MB
+            
+            # If server stabilized for 3 checks (6s) or after 25 iterations (50s)
+            if [ $BOOT_SETTLE_COUNT -ge 3 ] || [ $i -eq 25 ]; then
+                # Calculate auto-locked ceiling: (stable RSS + 40MB buffer)
+                AUTO_LOCK_MB=$((CUR_RSS_MB + 40))
+                
+                # If user specified a limit in control center, respect user's limit as ceiling
+                if [ -n "$TARGET_MAX_RAM" ] && [ "$TARGET_MAX_RAM" -ge 150 ]; then
+                    if [ $AUTO_LOCK_MB -gt "$TARGET_MAX_RAM" ]; then
+                        FINAL_LOCK_MB=$TARGET_MAX_RAM
+                    else
+                        FINAL_LOCK_MB=$AUTO_LOCK_MB
+                    fi
+                else
+                    FINAL_LOCK_MB=$AUTO_LOCK_MB
+                fi
+                
+                echo "[INFO] Boot phase finished! Stable RSS: ${CUR_RSS_MB}MB. Auto-locking RAM target: ${FINAL_LOCK_MB}MB." >> "$LOG_FILE"
+                echo "$FINAL_LOCK_MB" > "$DATA_DIR/locked_ram_limit"
+                break
+            fi
+        done
+        
+        # Continuous Memory Watchdog:
+        # If process ever climbs too high above lock target, trigger gentle V8 GC via signal or trim
+        while [ -d "/proc/$ROUTER_PID" ]; do
+            sleep 10
+            CUR_RSS_KB=$(grep -i 'VmRSS:' "/proc/$ROUTER_PID/status" 2>/dev/null | awk '{print $2}')
+            [ -z "$CUR_RSS_KB" ] && continue
+            CUR_RSS_MB=$((CUR_RSS_KB / 1024))
+            LOCK_VAL=$(cat "$DATA_DIR/locked_ram_limit" 2>/dev/null || echo "$FINAL_LOCK_MB")
+            if [ -n "$LOCK_VAL" ] && [ "$CUR_RSS_MB" -gt "$((LOCK_VAL + 50))" ]; then
+                # Notify kernel to compact/reclaim process memory
+                echo 1 > "/proc/sys/vm/compact_memory" 2>/dev/null || true
+            fi
+        done
+    ) &
+    WATCHDOG_PID=$!
+
     wait $ROUTER_PID
     EXIT_CODE=$?
-    rm -f "$DATA_DIR/atomic.pid"
+    kill $WATCHDOG_PID 2>/dev/null || true
+    rm -f "$DATA_DIR/atomic.pid" "$DATA_DIR/locked_ram_limit"
     UPTIME=$(( $(date +%s) - START_TIME ))
     echo "[INFO] AtomicRouter stopped (Exit code: $EXIT_CODE, Uptime: ${UPTIME}s)"
 

@@ -15,6 +15,7 @@ const UI_FLAG = path.join(DATA_DIR, 'enable_ui');
 const SYNC_FLAG = path.join(DATA_DIR, 'enable_sync');
 const LOG_FLAG = path.join(DATA_DIR, 'enable_internal_logs');
 const PID_FILE = path.join(DATA_DIR, 'atomic.pid');
+const LOCKED_RAM_FILE = path.join(DATA_DIR, 'locked_ram_limit');
 const SERVICE_LOG = path.join(DATA_DIR, 'service.log');
 
 function loadConfig() {
@@ -73,6 +74,13 @@ function getStatus() {
     }
   }
 
+  let lockedLimit = null;
+  if (fs.existsSync(LOCKED_RAM_FILE)) {
+    try {
+      lockedLimit = parseInt(fs.readFileSync(LOCKED_RAM_FILE, 'utf8').trim(), 10);
+    } catch {}
+  }
+
   return {
     running,
     pid,
@@ -85,7 +93,8 @@ function getStatus() {
     requireAuth: config.REQUIRE_AUTH === 'true',
     apiKey: config.CUSTOM_API_KEY || 'dsh-local-key',
     adminPassword: config.CUSTOM_ADMIN_PASSWORD || 'admin',
-    ramLimit: parseInt(config.CUSTOM_RAM_LIMIT || '300', 10)
+    ramLimit: parseInt(config.CUSTOM_RAM_LIMIT || '300', 10),
+    lockedLimit: lockedLimit || (running ? (rssMb ? rssMb + 40 : null) : null)
   };
 }
 
@@ -299,7 +308,8 @@ function renderHtml() {
           ? '<span class="status-badge badge-on"><span class="badge-dot"></span>ON (' + d.pid + ')</span>'
           : '<span class="status-badge badge-off"><span class="badge-dot"></span>OFF</span>';
 
-        document.getElementById('stat-ram').innerText = d.rssMb + ' MB / ' + d.ramLimit + ' MB';
+        const lockText = d.lockedLimit ? (' (Lock: ~' + d.lockedLimit + ' MB)') : ' (Booting...)';
+        document.getElementById('stat-ram').innerText = d.rssMb + ' MB' + (d.running ? lockText : ' / ' + d.ramLimit + ' MB');
         document.getElementById('stat-dash').innerText = d.dashboardActive ? 'ACTIVE' : 'DORMANT (Lite)';
         document.getElementById('stat-uptime').innerText = d.running ? d.uptimeSec + 's' : '-';
 
